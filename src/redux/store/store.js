@@ -3,9 +3,13 @@ import storage from "redux-persist/lib/storage";
 import persistReducer from "redux-persist/es/persistReducer";
 import persistStore from "redux-persist/es/persistStore";
 import authReducer from "../slice/auth/authSlice";
+import distributorReducer from "../slice/distributor/distributorSlice";
+import dealerReducer from "../slice/dealer/dealerSlice"
 
 const appReducer = combineReducers({
   auth: authReducer,
+  distributor: distributorReducer,
+  dealer:dealerReducer
 });
 
 const rootReducer = (state, action) => {

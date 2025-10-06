@@ -1,45 +1,45 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import distributorService from "./distributorService";
 import { toast } from "react-toastify";
+import dealerService from "./dealerService";
 
-export const addDistributor = createAsyncThunk(
-    "distributor/addDistributor",
+export const addDealer = createAsyncThunk(
+    "Dealer/addDealer",
     async (data, thunkAPI) => {
         try {
-            return await distributorService.createDistributor(data);
+            return await dealerService.createDealer(data);
         } catch (err) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
-export const getDistributor = createAsyncThunk(
-    "distributor/getDistributor",
+export const getDealer = createAsyncThunk(
+    "Dealer/getDealer",
     async (payload, thunkAPI) => {
         try {
-            return await distributorService.getAllDistributor(payload);
+            return await dealerService.getAllDealer(payload);
         } catch (err) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
-export const getDistributorById = createAsyncThunk(
-    "distributor/getDistributorById",
+export const getDealerById = createAsyncThunk(
+    "Dealer/getDealerById",
     async (payload, thunkAPI) => {
         try {
-            return await distributorService.getDistributorById(payload);
+            return await dealerService.getDealerById(payload);
         } catch (err) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
-export const getDistributorDropdown = createAsyncThunk(
-    "distributor/getDistributorDropdown",
+export const getDealerDropdown = createAsyncThunk(
+    "Dealer/getDealerDropdown",
     async (thunkAPI) => {
         try {
-            return await distributorService.getDistributorDropdown();
+            return await dealerService.getDealerDropdown();
         } catch (err) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
         }
@@ -47,12 +47,12 @@ export const getDistributorDropdown = createAsyncThunk(
 );
 
 
-const distributorSlice = createSlice({
-    name: "distributor",
+const dealerSlice = createSlice({
+    name: "Dealer",
     initialState: {
-        distributor: [],
-        distributorById: null,
-        distributorDrop: [],
+        dealer: [],
+        dealerById: null,
+        dealerDrop: [],
         pagination: {
             page: 1,
             total: 0,
@@ -65,31 +65,31 @@ const distributorSlice = createSlice({
         error: null,
     },
     reducers: {
-        resetDistributor: (state) => {
+        resetDealer: (state) => {
             state.loading = false;
             state.error = null;
         },
     },
     extraReducers: (builder) => {
         builder
-            .addCase(addDistributor.pending, (state) => {
+            .addCase(addDealer.pending, (state) => {
                 state.postLoading = true;
             })
-            .addCase(addDistributor.fulfilled, (state, action) => {
+            .addCase(addDealer.fulfilled, (state, action) => {
                 state.postLoading = false;
                 state.message = action.payload?.message;
                 toast.success(state.message);
             })
-            .addCase(addDistributor.rejected, (state, action) => {
+            .addCase(addDealer.rejected, (state, action) => {
                 state.postLoading = false;
                 // toast.error(action.payload.error);
             })
-            .addCase(getDistributor.pending, (state) => {
+            .addCase(getDealer.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(getDistributor.fulfilled, (state, action) => {
+            .addCase(getDealer.fulfilled, (state, action) => {
                 state.loading = false;
-                state.distributor = action.payload.data;
+                state.dealer = action.payload.data;
                 state.pagination = {
                     page: action.payload.extras.page,
                     total: action.payload.extras.total,
@@ -97,34 +97,34 @@ const distributorSlice = createSlice({
                     totalPages: action.payload.extras.totalPages,
                 };
             })
-            .addCase(getDistributor.rejected, (state, action) => {
+            .addCase(getDealer.rejected, (state, action) => {
                 state.loading = false;
                 // toast.error(action.payload);
             })
-            .addCase(getDistributorById.pending, (state) => {
+            .addCase(getDealerById.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(getDistributorById.fulfilled, (state, action) => {
+            .addCase(getDealerById.fulfilled, (state, action) => {
                 state.loading = false;
-                state.distributorById = action.payload.data;
+                state.dealerById = action.payload.data;
             })
-            .addCase(getDistributorById.rejected, (state, action) => {
+            .addCase(getDealerById.rejected, (state, action) => {
                 state.loading = false;
                 // toast.error(action.payload);
             })
-            .addCase(getDistributorDropdown.pending, (state) => {
+            .addCase(getDealerDropdown.pending, (state) => {
                 state.dropLoading = true;
             })
-            .addCase(getDistributorDropdown.fulfilled, (state, action) => {
+            .addCase(getDealerDropdown.fulfilled, (state, action) => {
                 state.dropLoading = false;
-                state.distributorDrop = action.payload.data;
+                state.dealerDrop = action.payload.data;
             })
-            .addCase(getDistributorDropdown.rejected, (state, action) => {
+            .addCase(getDealerDropdown.rejected, (state, action) => {
                 state.dropLoading = false;
                 // toast.error(action.payload);
             });
     },
 });
 
-export const { resetDistributor } = distributorSlice.actions;
-export default distributorSlice.reducer;
+export const { resetDealer } = dealerSlice.actions;
+export default dealerSlice.reducer;
