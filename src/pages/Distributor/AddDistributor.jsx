@@ -18,7 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addDistributor, getDistributorById } from "../../redux/slice/distributor/distributorSlice";
 
 const { Title } = Typography;
-const AddItem = () => {
+const AddDistributor = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -206,4 +206,4 @@ const AddItem = () => {
   );
 };
 
-export default AddItem;
+export default AddDistributor;

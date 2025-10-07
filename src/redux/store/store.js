@@ -4,12 +4,14 @@ import persistReducer from "redux-persist/es/persistReducer";
 import persistStore from "redux-persist/es/persistStore";
 import authReducer from "../slice/auth/authSlice";
 import distributorReducer from "../slice/distributor/distributorSlice";
-import dealerReducer from "../slice/dealer/dealerSlice"
+import dealerReducer from "../slice/dealer/dealerSlice";
+import technicianReducer from "../slice/technician/technicianSlice";
 
 const appReducer = combineReducers({
   auth: authReducer,
   distributor: distributorReducer,
-  dealer:dealerReducer
+  dealer:dealerReducer,
+  technician:technicianReducer
 });
 
 const rootReducer = (state, action) => {
