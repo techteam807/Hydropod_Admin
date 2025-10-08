@@ -145,26 +145,29 @@ const AddTechnician = () => {
             form={form}
             layout="vertical"
             onFinish={onFinish}
-            className="min-h-[70vh] !px-2"
+            className="p-6 md:p-8 min-h-[70vh]"
           >
-            <Row gutter={16}>
-              <Col span={18}>
-                <div className="role-radio-group">
-                  <label className="ant-form-item-label">
-                    <span>User Type: </span>
-                  </label>
-                  <Radio.Group
-                    name="userType"
-                    onChange={handleUserTypeChange}
-                    value={userType}
-                  >
-                    <Radio value="Admin">Admin</Radio>
-                    <Radio value="Distributor">Distributor</Radio>
-                    <Radio value="Dealer">Dealer</Radio>
-                  </Radio.Group>
-                </div>
+            <Row gutter={[16, 16]}>
+              {/* User Type Selection */}
+              <Col span={24}>
+                <CustomInput
+                  type="radio"
+                  name="userType"
+                  label="User Type"
+                  value={userType}
+                  onChange={handleUserTypeChange}
+                  options={[
+                    { label: "Admin", value: "Admin" },
+                    { label: "Distributor", value: "Distributor" },
+                    { label: "Dealer", value: "Dealer" },
+                  ]}
+                  rules={[{ required: true, message: "Please select a user type" }]}
+                />
+                <div className="my-4"></div>
               </Col>
-              <Col span={8}>
+
+              {/* Name */}
+              <Col xs={24} sm={12} md={8}>
                 <CustomInput
                   type="text"
                   name="name"
@@ -173,56 +176,75 @@ const AddTechnician = () => {
                   rules={[{ required: true, message: "Please enter name" }]}
                 />
               </Col>
-              <Col span={8}>
+
+              {/* Mobile Number */}
+              <Col xs={24} sm={12} md={8}>
                 <CustomInput
                   type="text"
                   name="mobile_number"
                   label="Mobile Number"
                   placeholder="Enter Mobile Number"
                   maxLength={10}
-                  rules={[{ required: true, message: "Please enter Mobile Number" },
-                  {
-                    pattern: /^[0-9]{10}$/,
-                    message: "Mobile number must be digits",
-                  },
+                  rules={[
+                    { required: true, message: "Please enter Mobile Number" },
+                    {
+                      pattern: /^[0-9]{10}$/,
+                      message: "Mobile number must be 10 digits",
+                    },
                   ]}
                 />
               </Col>
 
+              {/* Admin only: User Name */}
               {userType === "Admin" && (
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <CustomInput
                     type="text"
                     name="userName"
                     label="User Name"
                     placeholder="Enter User Name"
-                    value={user?.name || ""} // show auth user name
-                    disabled // always disabled for Admin
-                  />
-                </Col>
-              )}
-              {(userType === "Distributor" || userType === "Dealer") && (
-                <Col span={8}>
-                  <Select
-                    name="distributorId"
-                    label="Select Distributor"
-                    placeholder="Choose Distributor"
-                    style={{ width: "100%" }}
-                    onChange={handleDistributorChange}
-                    options={distributorDrop.map((d) => ({ label: d.name, value: d._id }))}
+                    value={user?.name || ""}
+                    disabled
                   />
                 </Col>
               )}
 
+              {/* Distributor or Dealer: Distributor Select */}
+              {(userType === "Distributor" || userType === "Dealer") && (
+                <Col xs={24} sm={12} md={8}>
+                  <Form.Item
+                    name="distributorId"
+                    label="Select Distributor"
+                    rules={[{ required: true, message: "Please select a distributor" }]}
+                  >
+                    <Select
+                      placeholder="Choose Distributor"
+                      onChange={handleDistributorChange}
+                      options={distributorDrop.map((d) => ({
+                        label: d.name,
+                        value: d._id,
+                      }))}
+                    />
+                  </Form.Item>
+                </Col>
+              )}
+
+              {/* Dealer only: Dealer Select */}
               {userType === "Dealer" && (
-                <Col span={8}>
-                  <Select
+                <Col xs={24} sm={12} md={8}>
+                  <Form.Item
                     name="dealerId"
                     label="Select Dealer"
-                    placeholder="Choose Dealer"
-                    style={{ width: "100%" }}
-                    options={filteredDealers.map((d) => ({ label: d.name, value: d._id }))}
-                  />
+                    rules={[{ required: true, message: "Please select a dealer" }]}
+                  >
+                    <Select
+                      placeholder="Choose Dealer"
+                      options={filteredDealers.map((d) => ({
+                        label: d.name,
+                        value: d._id,
+                      }))}
+                    />
+                  </Form.Item>
                 </Col>
               )}
             </Row>
