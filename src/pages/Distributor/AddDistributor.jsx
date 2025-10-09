@@ -16,6 +16,7 @@ import CustomInput from "../../component/commonComponent/CustomInput";
 import Icons from "../../assets/icon";
 import { useDispatch, useSelector } from "react-redux";
 import { addDistributor, getDistributorById } from "../../redux/slice/distributor/distributorSlice";
+import { indiaCities } from "../../constants/cities";
 
 const { Title } = Typography;
 const AddDistributor = () => {
@@ -34,7 +35,7 @@ const AddDistributor = () => {
 
   useEffect(() => {
     if (distributorId) {
-      dispatch(getDistributorById({distributorId}));
+      dispatch(getDistributorById({ distributorId }));
     }
   }, [distributorId, dispatch]);
 
@@ -59,10 +60,12 @@ const AddDistributor = () => {
       name: values.name || "",
       email: values.email || "",
       mobile_number: values.mobile_number || "",
-      address: values.address,
-      city: values.city || "",
-      state: values.state || "",
-      country: values.country || "",
+      address: {
+        line1: values.address?.line1,
+        line2: values.address?.line2,
+        city: values.address?.city,
+        state: values.address?.state,
+      },
     };
     try {
       if (distributorId) {
@@ -109,82 +112,79 @@ const AddDistributor = () => {
             onFinish={onFinish}
             className="min-h-[70vh] !px-2"
           >
-            <Row gutter={16}>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="company_name"
-                  label="Company Name"
-                  placeholder="Enter Company name"
-                  rules={[{ required: true, message: "Please enter Company name" }]}
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="name"
-                  label="Name"
-                  placeholder="Enter name"
-                  rules={[{ required: true, message: "Please enter name" }]}
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="email"
-                  label="Email"
-                  placeholder="Enter email"
-                  rules={[{ required: true, message: "Please enter email" }]}
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="mobile_number"
-                  label="Mobile Number"
-                  placeholder="Enter Mobile Number"
-                  maxLength={10}
-                  rules={[{ required: true, message: "Please enter Mobile Number" },
-                  {
-                    pattern: /^[0-9]{10}$/,
-                    message: "Mobile number must be digits",
-                  },
-                  ]}
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="address"
-                  label="Address"
-                  placeholder="Enter Address"
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="city"
-                  label="City"
-                  placeholder="Enter City"
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="state"
-                  label="State"
-                  placeholder="Enter State"
-                />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="country"
-                  label="Country"
-                  placeholder="Enter Country"
-                />
-              </Col>
-            </Row>
+            <div className="grid grid-cols-3 gap-4">
+              <CustomInput
+                type="text"
+                name="company_name"
+                label="Company Name"
+                placeholder="Enter Company name"
+                rules={[{ required: true, message: "Please enter Company name" }]}
+              />
+              <CustomInput
+                type="text"
+                name="name"
+                label="Name"
+                placeholder="Enter name"
+                rules={[{ required: true, message: "Please enter name" }]}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <CustomInput
+                type="text"
+                name="email"
+                label="Email"
+                placeholder="Enter email"
+                rules={[{ required: true, message: "Please enter email" }]}
+              />
+              <CustomInput
+                type="text"
+                name="mobile_number"
+                label="Mobile Number"
+                placeholder="Enter Mobile Number"
+                maxLength={10}
+                rules={[{ required: true, message: "Please enter Mobile Number" },
+                {
+                  pattern: /^[0-9]{10}$/,
+                  message: "Mobile number must be digits",
+                },
+                ]}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <CustomInput
+                type="textarea"
+                name={["address", "line1"]}
+                label="Address"
+                placeholder="Street 1"
+              // rules={[{ required: true, message: "Please enter Address Line 1" }]}
+              />
+              <CustomInput
+                type="textarea"
+                name={["address", "line2"]}
+                label="Address"
+                placeholder="Street 2"
+              // rules={[{ required: true, message: "Please enter Address Line 2" }]}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <CustomInput
+                type="select"
+                name={["address", "city"]}
+                label="City"
+                placeholder="Select City"
+                options={indiaCities.map((city) => ({ label: city, value: city }))}
+                showSearch={true} // makes the dropdown searchable
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
+              />
+              <CustomInput
+                type="text"
+                name={["address", "state"]}
+                label="State"
+                placeholder="Enter State"
+              />
+            </div>
           </Form>
         )}
       </Card>

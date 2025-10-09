@@ -56,13 +56,22 @@ const ViewDealer = () => {
   };
 
   const columns = [
-    { title: "Distributor Name", dataIndex: "distributorId", key: "distributorId" },
+    {
+      title: "Distributor Name",
+      dataIndex: "distributorId",
+      key: "distributorId",
+      render: (distributorId) => distributorId?.name || distributorId?.company_name || "-",
+    },
     { title: "Company Name", dataIndex: "company_name", key: "company_name" },
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Mobile", dataIndex: "mobile_number", key: "mobile_number" },
-    { title: "City", dataIndex: "city", key: "city" },
-    { title: "Country", dataIndex: "country", key: "country" },
+    {
+      title: "City",
+      key: "city",
+      render: (_, record) => record.address?.city || "-", // safely access city
+    },
+    // { title: "Country", dataIndex: "country", key: "country" },
     {
       title: "Action",
       key: "action",

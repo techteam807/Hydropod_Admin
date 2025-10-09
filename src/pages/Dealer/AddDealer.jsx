@@ -1,4 +1,4 @@
-import { Button, Card, Col, Form, Row, Spin, Typography } from 'antd';
+import { Button, Card, Col, Form, message, Row, Spin, Typography } from 'antd';
 import React from 'react'
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import Icons from '../../assets/icon';
 import CustomInput from '../../component/commonComponent/CustomInput';
 import { getDistributorDropdown } from '../../redux/slice/distributor/distributorSlice';
+import { indiaCities } from '../../constants/cities';
 
 
 const { Title } = Typography;
@@ -48,9 +49,12 @@ function AddDealer() {
         name: dealerById?.dealer?.name || "",
         email: dealerById?.dealer?.email || "",
         mobile_number: dealerById?.dealer?.mobile_number || "",
-        address: dealerById?.dealer?.address || "",
-        city: dealerById?.dealer?.city || "",
-        state: dealerById?.dealer?.state || "",
+        address: {
+          line1: dealerById?.dealer?.address?.line1 || "",
+          line2: dealerById?.dealer?.address?.line2 || "",
+          city: dealerById?.dealer?.address?.city || "",
+          state: dealerById?.dealer?.address?.state || "",
+        },
         country: dealerById?.dealer?.country || "",
       });
     }
@@ -63,14 +67,18 @@ function AddDealer() {
       name: values.name,
       email: values.email,
       mobile_number: values.mobile_number,
-      address: values.address,
-      city: values.city,
-      state: values.state,
+      address: {
+        line1: values.address?.line1,
+        line2: values.address?.line2,
+        city: values.address?.city,
+        state: values.address?.state,
+      },
       country: values.country,
     };
+
     try {
       if (dealerId) {
-        // await dispatch(update({ id: dealerId, data: payload })).unwrap();
+        // await dispatch(updateDealer({ id: dealerId, data: payload })).unwrap();
         navigate(-1);
       } else {
         await dispatch(addDealer(payload)).unwrap();
@@ -113,8 +121,8 @@ function AddDealer() {
             onFinish={onFinish}
             className="min-h-[70vh] !px-2"
           >
-            <Row gutter={16}>
-              <Col span={8}>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
                 <CustomInput
                   type="select"
                   name="distributorId"
@@ -127,8 +135,9 @@ function AddDealer() {
                   rules={[{ required: true, message: "Please select Distributor" }]}
                   disabled={dealerId}
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+
+              <div>
                 <CustomInput
                   type="text"
                   name="company_name"
@@ -136,8 +145,10 @@ function AddDealer() {
                   placeholder="Enter Company name"
                   rules={[{ required: true, message: "Please enter Company name" }]}
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
                 <CustomInput
                   type="text"
                   name="name"
@@ -145,8 +156,8 @@ function AddDealer() {
                   placeholder="Enter name"
                   rules={[{ required: true, message: "Please enter name" }]}
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+              <div>
                 <CustomInput
                   type="text"
                   name="email"
@@ -154,55 +165,72 @@ function AddDealer() {
                   placeholder="Enter email"
                   rules={[{ required: true, message: "Please enter email" }]}
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+              <div>
                 <CustomInput
                   type="text"
                   name="mobile_number"
                   label="Mobile Number"
                   placeholder="Enter Mobile Number"
                   maxLength={10}
-                  rules={[{ required: true, message: "Please enter Mobile Number" },
-                  {
-                    pattern: /^[0-9]{10}$/,
-                    message: "Mobile number must be digits",
-                  },
+                  rules={[
+                    { required: true, message: "Please enter Mobile Number" },
+                    {
+                      pattern: /^[0-9]{10}$/,
+                      message: "Mobile number must be digits",
+                    },
                   ]}
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
                 <CustomInput
-                  type="text"
-                  name="address"
+                  type="textarea"
+                  name={["address", "line1"]}
                   label="Address"
-                  placeholder="Enter Address"
+                  placeholder="Street 1"
+                // rules={[{ required: true, message: "Please enter Address Line 1" }]}
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+              <div>
                 <CustomInput
-                  type="text"
-                  name="city"
+                  type="textarea"
+                  name={["address", "line2"]}
+                  label="Address"
+                  placeholder="Street 2"
+                // rules={[{ required: true, message: "Please enter Address Line 2" }]}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <CustomInput
+                  type="select"
+                  name={["address", "city"]}
                   label="City"
-                  placeholder="Enter City"
+                  placeholder="Select City"
+                  options={indiaCities.map((city) => ({ label: city, value: city }))}
+                  showSearch={true} // makes the dropdown searchable
+                  filterOption={(input, option) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
                 />
-              </Col>
-              <Col span={8}>
+              </div>
+              <div>
                 <CustomInput
                   type="text"
-                  name="state"
+                  name={["address", "state"]}
                   label="State"
                   placeholder="Enter State"
+                // rules={[{ required: true, message: "Please enter State" }]}
                 />
-              </Col>
-              <Col span={8}>
-                <CustomInput
-                  type="text"
-                  name="country"
-                  label="Country"
-                  placeholder="Enter Country"
-                />
-              </Col>
-            </Row>
+              </div>
+            </div>
+            <div>
+            </div>
+
           </Form>
         )}
       </Card>

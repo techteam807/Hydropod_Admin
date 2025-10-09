@@ -58,8 +58,12 @@ const ViewDistributor = () => {
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Mobile", dataIndex: "mobile_number", key: "mobile_number" },
-    { title: "City", dataIndex: "city", key: "city" },
-    { title: "Country", dataIndex: "country", key: "country" },
+    {
+      title: "City",
+      key: "city",
+      render: (_, record) => record.address?.city || "-", 
+    },
+    // { title: "Country", dataIndex: "country", key: "country" },
     {
       title: "Action",
       key: "action",
@@ -68,7 +72,7 @@ const ViewDistributor = () => {
           <Button
             type="default"
             icon={<Icons.EyeOutlined />}
-            // onClick={() => navigate(`/customer/view/${record._id}`)}
+          // onClick={() => navigate(`/customer/view/${record._id}`)}
           />
 
           <Button

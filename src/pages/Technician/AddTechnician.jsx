@@ -146,10 +146,11 @@ const AddTechnician = () => {
             layout="vertical"
             onFinish={onFinish}
             className="p-6 md:p-8 min-h-[70vh]"
+            initialValues={{ userType: "Admin" }}
           >
-            <Row gutter={[16, 16]}>
+            <div className="gap-4">
               {/* User Type Selection */}
-              <Col span={24}>
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                 <CustomInput
                   type="radio"
                   name="userType"
@@ -164,40 +165,13 @@ const AddTechnician = () => {
                   rules={[{ required: true, message: "Please select a user type" }]}
                 />
                 <div className="my-4"></div>
-              </Col>
-
-              {/* Name */}
-              <Col xs={24} sm={12} md={8}>
-                <CustomInput
-                  type="text"
-                  name="name"
-                  label="Name"
-                  placeholder="Enter name"
-                  rules={[{ required: true, message: "Please enter name" }]}
-                />
-              </Col>
-
-              {/* Mobile Number */}
-              <Col xs={24} sm={12} md={8}>
-                <CustomInput
-                  type="text"
-                  name="mobile_number"
-                  label="Mobile Number"
-                  placeholder="Enter Mobile Number"
-                  maxLength={10}
-                  rules={[
-                    { required: true, message: "Please enter Mobile Number" },
-                    {
-                      pattern: /^[0-9]{10}$/,
-                      message: "Mobile number must be 10 digits",
-                    },
-                  ]}
-                />
-              </Col>
+              </div>
 
               {/* Admin only: User Name */}
+              <div>
+              <div className='grid grid-cols-3 gap-4'>
               {userType === "Admin" && (
-                <Col xs={24} sm={12} md={8}>
+                <div>
                   <CustomInput
                     type="text"
                     name="userName"
@@ -206,12 +180,10 @@ const AddTechnician = () => {
                     value={user?.name || ""}
                     disabled
                   />
-                </Col>
+                </div>
               )}
-
-              {/* Distributor or Dealer: Distributor Select */}
-              {(userType === "Distributor" || userType === "Dealer") && (
-                <Col xs={24} sm={12} md={8}>
+                {(userType === "Distributor" || userType === "Dealer") && (
+                <div>
                   <Form.Item
                     name="distributorId"
                     label="Select Distributor"
@@ -226,12 +198,10 @@ const AddTechnician = () => {
                       }))}
                     />
                   </Form.Item>
-                </Col>
+                </div>
               )}
-
-              {/* Dealer only: Dealer Select */}
               {userType === "Dealer" && (
-                <Col xs={24} sm={12} md={8}>
+                <div>
                   <Form.Item
                     name="dealerId"
                     label="Select Dealer"
@@ -245,10 +215,40 @@ const AddTechnician = () => {
                       }))}
                     />
                   </Form.Item>
-                </Col>
+                </div>
               )}
-            </Row>
+              </div>
+              <div className='grid grid-cols-3 gap-4'>
+               <div>
+                <CustomInput
+                  type="text"
+                  name="name"
+                  label="Name"
+                  placeholder="Enter name"
+                  rules={[{ required: true, message: "Please enter name" }]}
+                />
+              </div>
+              <div>
+                <CustomInput
+                  type="text"
+                  name="mobile_number"
+                  label="Mobile Number"
+                  placeholder="Enter Mobile Number"
+                  maxLength={10}
+                  rules={[
+                    { required: true, message: "Please enter Mobile Number" },
+                    {
+                      pattern: /^[0-9]{10}$/,
+                      message: "Mobile number must be 10 digits",
+                    },
+                  ]}
+                />
+              </div>
+              </div>
+              </div>
+            </div>
           </Form>
+
         )}
       </Card>
 
