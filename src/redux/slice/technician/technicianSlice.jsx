@@ -23,10 +23,22 @@ export const getTechnician = createAsyncThunk(
     }
 );
 
+export const getCount = createAsyncThunk(
+    "technician/getCount",
+    async () => {
+        try {
+            return await technicianService.getCount();
+        } catch (err) {
+            return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+        }
+    }
+);
+
 const technicianSlice = createSlice({
     name: "technician",
     initialState: {
         technician: [],
+        count: [],
         pagination: {
             page: 1,
             total: 0,
@@ -35,7 +47,7 @@ const technicianSlice = createSlice({
         },
         loading: false,
         postLoading: false,
-        dropLoading:false,
+        dropLoading: false,
         error: null,
     },
     reducers: {
@@ -72,6 +84,17 @@ const technicianSlice = createSlice({
                 };
             })
             .addCase(getTechnician.rejected, (state, action) => {
+                state.loading = false;
+                // toast.error(action.payload);
+            })
+            .addCase(getCount.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getCount.fulfilled, (state, action) => {
+                state.loading = false;
+                state.count = action.payload.data;
+            })
+            .addCase(getCount.rejected, (state, action) => {
                 state.loading = false;
                 // toast.error(action.payload);
             })

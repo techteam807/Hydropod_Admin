@@ -1,24 +1,36 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, Row, Col, Typography } from "antd";
 import { UserOutlined, TeamOutlined, ToolOutlined } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { getCount } from "../redux/slice/technician/technicianSlice";
 
 const { Title, Text } = Typography;
 
 const Home = () => {
+  const dispatch = useDispatch();
+  const { count } = useSelector((state) => state.technician);
+
+  console.log("count",count);
+  
+
+  useEffect(() => {
+    dispatch(getCount());
+  }, [dispatch]);
+
   const stats = [
     {
       title: "Total Distributor",
-      value: 1200,
+       value: count.distributor || 0, 
       icon: <TeamOutlined style={{ fontSize: 30, color: "#1677ff" }} />,
     },
     {
       title: "Total Dealer",
-      value: 3500,
+      value: count.dealer || 0,
       icon: <UserOutlined style={{ fontSize: 30, color: "#722ed1" }} />,
     },
     {
       title: "Total Technician",
-      value: 124500,
+       value: count.technician || 0,
       icon: <ToolOutlined style={{ fontSize: 30, color: "#52c41a" }} />,
     },
   ];

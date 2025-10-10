@@ -15,8 +15,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import Icons from "../../assets/icon";
 import { useDispatch, useSelector } from "react-redux";
-import { addDistributor, getDistributorById } from "../../redux/slice/distributor/distributorSlice";
-import { indiaCities } from "../../constants/cities";
+import { addDistributor, getDistributorById, updateDistributor } from "../../redux/slice/distributor/distributorSlice";
+import { statesAndCities } from "../../constants/cities";
 
 const { Title } = Typography;
 const AddDistributor = () => {
@@ -28,6 +28,8 @@ const AddDistributor = () => {
   const [newCategoryName, setNewCategoryName] = useState("");
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+  const [selectedState, setSelectedState] = useState(null);
+  const [cityOptions, setCityOptions] = useState([]);
 
   const { distributorById, loading, postLoading } = useSelector(
     (state) => state.distributor
@@ -46,10 +48,12 @@ const AddDistributor = () => {
         name: distributorById?.distributor?.name || "",
         email: distributorById?.distributor?.email || "",
         mobile_number: distributorById?.distributor?.mobile_number || "",
-        address: distributorById?.distributor?.address || "",
-        city: distributorById?.distributor?.city || "",
-        state: distributorById?.distributor?.state || "",
-        country: distributorById?.distributor?.country || "",
+        address: {
+          line1: distributorById?.distributor?.address?.line1 || "",
+          line2: distributorById?.distributor?.country?.line2 || "",
+          city: distributorById?.distributor?.city || "",
+          state: distributorById?.distributor?.state || "",
+        }
       });
     }
   }, [distributorId, distributorById, form]);
@@ -69,7 +73,7 @@ const AddDistributor = () => {
     };
     try {
       if (distributorId) {
-        // await dispatch(update({ id: distributorId, data: payload })).unwrap();
+        await dispatch(updateDistributor({ distributorId, data: payload })).unwrap();
         navigate(-1);
       } else {
         await dispatch(addDistributor(payload)).unwrap();
@@ -79,6 +83,14 @@ const AddDistributor = () => {
       message.error(err);
     }
   };
+
+  const handleStateChange = (value) => {
+    setSelectedState(value);
+    setCityOptions(statesAndCities[value] || []);
+    // Reset city when state changes
+    form.setFieldsValue({ address: { city: null } });
+  };
+
 
   return (
     <div className="!relative">
@@ -110,9 +122,9 @@ const AddDistributor = () => {
             form={form}
             layout="vertical"
             onFinish={onFinish}
-            className="min-h-[70vh] !px-2"
+            className="min-h-[70vh] w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
           >
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <CustomInput
                 type="text"
                 name="company_name"
@@ -128,7 +140,7 @@ const AddDistributor = () => {
                 rules={[{ required: true, message: "Please enter name" }]}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               <CustomInput
                 type="text"
                 name="email"
@@ -150,39 +162,53 @@ const AddDistributor = () => {
                 ]}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <CustomInput
-                type="textarea"
-                name={["address", "line1"]}
-                label="Address"
-                placeholder="Street 1"
-              // rules={[{ required: true, message: "Please enter Address Line 1" }]}
-              />
-              <CustomInput
-                type="textarea"
-                name={["address", "line2"]}
-                label="Address"
-                placeholder="Street 2"
-              // rules={[{ required: true, message: "Please enter Address Line 2" }]}
-              />
+            <div className="grid grid-cols-3 gap-4 mt-4 max-w-4xl mx-auto">
+              <div className="col-span-2">
+                <CustomInput
+                  type="text"
+                  name={["address", "line1"]}
+                  label="Address"
+                  placeholder="Street 1"
+                  className="w-full"
+                   rules={[{ required: true, message: "Please enter Address" }]}
+                />
+              </div>
+              <div className="col-span-2">
+                <CustomInput
+                  type="text"
+                  name={["address", "line2"]}
+                  placeholder="Street 2"
+                  className="w-full"
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <CustomInput
                 type="select"
-                name={["address", "city"]}
-                label="City"
-                placeholder="Select City"
-                options={indiaCities.map((city) => ({ label: city, value: city }))}
-                showSearch={true} // makes the dropdown searchable
+                name={["address", "state"]}
+                label="State"
+                placeholder="Select State"
+                options={Object.keys(statesAndCities).map((state) => ({
+                  label: state,
+                  value: state,
+                }))}
+                showSearch
+                onChange={handleStateChange}
                 filterOption={(input, option) =>
                   option.label.toLowerCase().includes(input.toLowerCase())
                 }
               />
               <CustomInput
-                type="text"
-                name={["address", "state"]}
-                label="State"
-                placeholder="Enter State"
+                type="select"
+                name={["address", "city"]}
+                label="City"
+                placeholder="Select City"
+                options={cityOptions.map((city) => ({ label: city, value: city }))}
+                showSearch
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
               />
             </div>
           </Form>

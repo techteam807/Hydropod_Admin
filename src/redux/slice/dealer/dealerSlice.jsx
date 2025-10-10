@@ -46,6 +46,27 @@ export const getDealerDropdown = createAsyncThunk(
     }
 );
 
+export const updateDealer = createAsyncThunk(
+    "distributor/updateDealer",
+    async ({ dealerId, data }, thunkAPI) => {
+        try {
+            return await dealerService.updateDealer(dealerId, data);
+        } catch (err) {
+            return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+        }
+    }
+);
+
+export const deleteDealer = createAsyncThunk(
+    "distributor/deleteDealer",
+    async (dealerId, thunkAPI) => {
+        try {
+            return await dealerService.deleteDealer(dealerId);
+        } catch (err) {
+            return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+        }
+    }
+);
 
 const dealerSlice = createSlice({
     name: "Dealer",
@@ -61,7 +82,8 @@ const dealerSlice = createSlice({
         },
         loading: false,
         postLoading: false,
-        dropLoading:false,
+        dropLoading: false,
+        deleteLoading: false,
         error: null,
     },
     reducers: {
@@ -121,6 +143,34 @@ const dealerSlice = createSlice({
             })
             .addCase(getDealerDropdown.rejected, (state, action) => {
                 state.dropLoading = false;
+                // toast.error(action.payload);
+            })
+            .addCase(updateDealer.pending, (state) => {
+                state.postLoading = true;
+            })
+            .addCase(updateDealer.fulfilled, (state, action) => {
+                state.postLoading = false;
+                state.message = action.payload?.message;
+                toast.success(state.message);
+            })
+            .addCase(updateDealer.rejected, (state, action) => {
+                state.postLoading = false;
+                // toast.error(action.payload.error);
+            })
+            .addCase(deleteDealer.pending, (state) => {
+                state.deleteLoading = true;
+                state.error = null;
+            })
+            .addCase(deleteDealer.fulfilled, (state, action) => {
+                state.deleteLoading = false;
+                state.dealer = state.dealer.filter(
+                    (item) => item._id !== action.meta.arg
+                );
+                toast.success(action.payload?.message);
+            })
+            .addCase(deleteDealer.rejected, (state, action) => {
+                state.deleteLoading = false;
+                state.error = action.payload;
                 // toast.error(action.payload);
             });
     },

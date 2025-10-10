@@ -46,6 +46,28 @@ export const getDistributorDropdown = createAsyncThunk(
     }
 );
 
+export const updateDistributor = createAsyncThunk(
+    "distributor/updateDistributor",
+    async ({ distributorId, data }, thunkAPI) => {
+        try {
+            return await distributorService.updateDistributor(distributorId, data);
+        } catch (err) {
+            return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+        }
+    }
+);
+
+export const deleteDistributor = createAsyncThunk(
+    "distributor/deleteDistributor",
+    async (distributorId, thunkAPI) => {
+        try {
+            return await distributorService.deleteDistributor(distributorId);
+        } catch (err) {
+            return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+        }
+    }
+);
+
 
 const distributorSlice = createSlice({
     name: "distributor",
@@ -61,7 +83,8 @@ const distributorSlice = createSlice({
         },
         loading: false,
         postLoading: false,
-        dropLoading:false,
+        dropLoading: false,
+        deleteLoading: false,
         error: null,
     },
     reducers: {
@@ -121,6 +144,34 @@ const distributorSlice = createSlice({
             })
             .addCase(getDistributorDropdown.rejected, (state, action) => {
                 state.dropLoading = false;
+                // toast.error(action.payload);
+            })
+            .addCase(updateDistributor.pending, (state) => {
+                state.postLoading = true;
+            })
+            .addCase(updateDistributor.fulfilled, (state, action) => {
+                state.postLoading = false;
+                state.message = action.payload?.message;
+                toast.success(state.message);
+            })
+            .addCase(updateDistributor.rejected, (state, action) => {
+                state.postLoading = false;
+                // toast.error(action.payload.error);
+            })
+            .addCase(deleteDistributor.pending, (state) => {
+                state.deleteLoading = true;
+                state.error = null;
+            })
+            .addCase(deleteDistributor.fulfilled, (state, action) => {
+                state.deleteLoading = false;
+                state.distributor = state.distributor.filter(
+                    (item) => item._id !== action.meta.arg
+                );
+                 toast.success(action.payload?.message);
+            })
+            .addCase(deleteDistributor.rejected, (state, action) => {
+                state.deleteLoading = false;
+                state.error = action.payload;
                 // toast.error(action.payload);
             });
     },

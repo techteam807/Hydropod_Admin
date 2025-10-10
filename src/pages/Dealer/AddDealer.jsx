@@ -3,12 +3,12 @@ import React from 'react'
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { addDealer, getDealerById } from '../../redux/slice/dealer/dealerSlice';
+import { addDealer, getDealerById, updateDealer } from '../../redux/slice/dealer/dealerSlice';
 import { useEffect } from 'react';
 import Icons from '../../assets/icon';
 import CustomInput from '../../component/commonComponent/CustomInput';
 import { getDistributorDropdown } from '../../redux/slice/distributor/distributorSlice';
-import { indiaCities } from '../../constants/cities';
+import { statesAndCities } from '../../constants/cities';
 
 
 const { Title } = Typography;
@@ -22,6 +22,8 @@ function AddDealer() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+  const [selectedState, setSelectedState] = useState(null);
+  const [cityOptions, setCityOptions] = useState([]);
 
   const { distributorDrop } = useSelector(
     (state) => state.distributor
@@ -78,7 +80,9 @@ function AddDealer() {
 
     try {
       if (dealerId) {
-        // await dispatch(updateDealer({ id: dealerId, data: payload })).unwrap();
+        console.log("payload", payload);
+
+        await dispatch(updateDealer({ dealerId, data: payload })).unwrap();
         navigate(-1);
       } else {
         await dispatch(addDealer(payload)).unwrap();
@@ -87,6 +91,12 @@ function AddDealer() {
     } catch (err) {
       message.error(err);
     }
+  };
+
+  const handleStateChange = (value) => {
+    setSelectedState(value);
+    setCityOptions(statesAndCities[value] || []);
+    form.setFieldsValue({ address: { city: null } });
   };
 
   return (
@@ -121,7 +131,7 @@ function AddDealer() {
             onFinish={onFinish}
             className="min-h-[70vh] !px-2"
           >
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <CustomInput
                   type="select"
@@ -136,7 +146,8 @@ function AddDealer() {
                   disabled={dealerId}
                 />
               </div>
-
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <CustomInput
                   type="text"
@@ -144,26 +155,6 @@ function AddDealer() {
                   label="Company Name"
                   placeholder="Enter Company name"
                   rules={[{ required: true, message: "Please enter Company name" }]}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <CustomInput
-                  type="text"
-                  name="name"
-                  label="Name"
-                  placeholder="Enter name"
-                  rules={[{ required: true, message: "Please enter name" }]}
-                />
-              </div>
-              <div>
-                <CustomInput
-                  type="text"
-                  name="email"
-                  label="Email"
-                  placeholder="Enter email"
-                  rules={[{ required: true, message: "Please enter email" }]}
                 />
               </div>
               <div>
@@ -183,50 +174,69 @@ function AddDealer() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <CustomInput
+                type="text"
+                name="name"
+                label="Name"
+                placeholder="Enter name"
+                rules={[{ required: true, message: "Please enter name" }]}
+              />
+              <CustomInput
+                type="text"
+                name="email"
+                label="Email"
+                placeholder="Enter email"
+                rules={[{ required: true, message: "Please enter email" }]}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4 mt-4 max-w-5xl mx-auto">
+              <div className="col-span-2">
                 <CustomInput
-                  type="textarea"
+                  type="text"
                   name={["address", "line1"]}
                   label="Address"
                   placeholder="Street 1"
-                // rules={[{ required: true, message: "Please enter Address Line 1" }]}
+                  className="w-full"
                 />
               </div>
-              <div>
+              <div className="col-span-2">
                 <CustomInput
-                  type="textarea"
+                  type="text"
                   name={["address", "line2"]}
-                  label="Address"
                   placeholder="Street 2"
-                // rules={[{ required: true, message: "Please enter Address Line 2" }]}
+                  className="w-full"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <CustomInput
-                  type="select"
-                  name={["address", "city"]}
-                  label="City"
-                  placeholder="Select City"
-                  options={indiaCities.map((city) => ({ label: city, value: city }))}
-                  showSearch={true} // makes the dropdown searchable
-                  filterOption={(input, option) =>
-                    option.label.toLowerCase().includes(input.toLowerCase())
-                  }
-                />
-              </div>
-              <div>
-                <CustomInput
-                  type="text"
-                  name={["address", "state"]}
-                  label="State"
-                  placeholder="Enter State"
-                // rules={[{ required: true, message: "Please enter State" }]}
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <CustomInput
+                type="select"
+                name={["address", "state"]}
+                label="State"
+                placeholder="Select State"
+                options={Object.keys(statesAndCities).map((state) => ({
+                  label: state,
+                  value: state,
+                }))}
+                showSearch
+                onChange={handleStateChange}
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
+              />
+              <CustomInput
+                type="select"
+                name={["address", "city"]}
+                label="City"
+                placeholder="Select City"
+                options={cityOptions.map((city) => ({ label: city, value: city }))}
+                showSearch
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
+              />
             </div>
             <div>
             </div>

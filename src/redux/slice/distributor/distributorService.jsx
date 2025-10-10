@@ -6,10 +6,10 @@ const createDistributor = async (data) => {
 };
 
 const getAllDistributor = async (payload) => {
-    const { search = "", limit = 10, page = 1 } = payload;
+    const { search = "", state = "", city = "", limit = 10, page = 1 } = payload;
 
     const res = await api.get("/distributor/getDistributors", {
-        params: { search, limit, page },
+        params: { search, state, city, limit, page },
     });
     return res.data;
 };
@@ -29,11 +29,24 @@ const getDistributorDropdown = async () => {
     return res.data;
 };
 
+const updateDistributor = async (distributorId, data) => {
+    const res = await api.put(
+        `/distributor/updateDistributor/${distributorId}`, data);
+    return res.data;
+};
+
+const deleteDistributor = async (distributorId) => {
+    const res = await api.put(`/distributor/deleteDistributor/${distributorId}`);
+    return res.data;
+};
+
 const distributorService = {
     createDistributor,
     getAllDistributor,
     getDistributorById,
     getDistributorDropdown,
+    updateDistributor,
+    deleteDistributor
 };
 
 export default distributorService;

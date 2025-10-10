@@ -1,13 +1,21 @@
-// src/constants/cities.js
+// src/constants/statesAndCities.js
 
-export const indiaCities = [
-  "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad", "Chennai",
-  "Kolkata", "Surat", "Pune", "Jaipur", "Lucknow", "Kanpur", "Nagpur",
-  "Indore", "Thane", "Bhopal", "Visakhapatnam", "Pimpri-Chinchwad",
-  "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra", "Nashik",
-  "Faridabad", "Meerut", "Rajkot", "Kalyan-Dombivli", "Vasai-Virar",
-  "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", "Amritsar", "Navi Mumbai",
-  "Allahabad", "Ranchi", "Howrah", "Coimbatore", "Jabalpur", "Gwalior",
-  "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Chandigarh",
-  "Guwahati", "Solapur"
-];
+export const statesAndCities = {
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Solapur", "Pimpri-Chinchwad", "Vasai-Virar"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar"],
+  "Karnataka": ["Bangalore", "Mysore", "Mangalore", "Hubli"],
+  "Delhi": ["Delhi"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Agra", "Varanasi", "Ghaziabad", "Meerut", "Allahabad"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Udaipur"],
+  "West Bengal": ["Kolkata", "Howrah"],
+  "Haryana": ["Faridabad"],
+  "Punjab": ["Ludhiana", "Amritsar"],
+  "Bihar": ["Patna"],
+  "Jharkhand": ["Ranchi", "Dhanbad"],
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada"],
+  "Chhattisgarh": ["Raipur"],
+  "Himachal Pradesh": ["Shimla"],
+  "Guwahati": ["Guwahati"],
+  "Chandigarh": ["Chandigarh"],
+};
