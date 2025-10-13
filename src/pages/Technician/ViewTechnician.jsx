@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { filteredURLParams, getQueryParams } from '../../utlis/services';
-import { Button, Card, Col, Input, Popconfirm, Row, Space, Tabs, Tag } from 'antd';
+import { Button, Card, Col, Input, Popconfirm, Row, Space, Tabs, Tag, message } from 'antd';
 import Icons from '../../assets/icon';
 import CustomTable from '../../component/commonComponent/CustomTable';
-import { getTechnician } from '../../redux/slice/technician/technicianSlice';
+import { deleteTechnician, getTechnician } from '../../redux/slice/technician/technicianSlice';
 import CustomInput from '../../component/commonComponent/CustomInput';
 import { getDistributorDropdown } from '../../redux/slice/distributor/distributorSlice';
 import { getDealerDropdown } from '../../redux/slice/dealer/dealerSlice';
@@ -33,7 +33,7 @@ const ViewTechnician = () => {
 
   const fetchTechnician = () => {
     const page = parseInt(searchParams?.get("page")) || 1;
-    const pageSize = parseInt(searchParams?.get("limit")) || pagination.limit;
+    const pageSize = parseInt(searchParams?.get("limit") || pagination.limit);
 
     let payload = getQueryParams(window.location.href);
 
@@ -95,8 +95,17 @@ const ViewTechnician = () => {
     } else {
       setInactivePage(page);
     }
+    updateUrlParams({ page, limit: pageSize });
   };
 
+  const handleDelete = async (technicianId) => {
+    try {
+      await dispatch(deleteTechnician(technicianId)).unwrap();
+      fetchTechnician();
+    } catch (err) {
+      message.error(err || 'Failed to delete technician');
+    }
+  };
   const columns = [
     { title: "Technician Name", dataIndex: "name", key: "name" },
     { title: "Mobile", dataIndex: "mobile_number", key: "mobile_number" },
@@ -128,21 +137,14 @@ const ViewTechnician = () => {
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
-            // onClick={() => navigate(`/technician/edit/${record._id}`)}
+            onClick={() => navigate(`/technician/edit/${record._id}`)}
           />
           <Popconfirm
-            title="Are you sure you want to delete this customer?"
+            title="Are you sure you want to delete this technician?"
             okText="Yes"
             cancelText="No"
           // okButtonProps={{ loading: deleteLoading }}
-          // onConfirm={async () => {
-          //   try {
-          //     await dispatch(deleteCustomerVendor(record._id)).unwrap();
-          //     message.success("Customer deleted successfully");
-          //   } catch (err) {
-          //     message.error(err || "Failed to delete customer");
-          //   }
-          // }}
+          onConfirm={() => handleDelete(record._id)}
           >
             <Button type="default" danger icon={<Icons.DeleteOutlined />} />
           </Popconfirm>
