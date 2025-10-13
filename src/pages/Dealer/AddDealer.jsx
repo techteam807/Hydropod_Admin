@@ -129,50 +129,44 @@ function AddDealer() {
             form={form}
             layout="vertical"
             onFinish={onFinish}
-            className="min-h-[70vh] !px-2"
+            className="min-h-[70vh] w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <CustomInput
-                  type="select"
-                  name="distributorId"
-                  label="Distributor Name"
-                  placeholder="Select Distributor name"
-                  options={distributorDrop.map((d) => ({
-                    label: d.distributorId || d.name,
-                    value: d._id,
-                  }))}
-                  rules={[{ required: true, message: "Please select Distributor" }]}
-                  disabled={dealerId}
-                />
-              </div>
+              <CustomInput
+                type="select"
+                name="distributorId"
+                label="Distributor Name"
+                placeholder="Select Distributor name"
+                options={distributorDrop.map((d) => ({
+                  label: d.distributorId || d.name,
+                  value: d._id,
+                }))}
+                rules={[{ required: true, message: "Please select Distributor" }]}
+                disabled={dealerId}
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <CustomInput
-                  type="text"
-                  name="company_name"
-                  label="Company Name"
-                  placeholder="Enter Company name"
-                  rules={[{ required: true, message: "Please enter Company name" }]}
-                />
-              </div>
-              <div>
-                <CustomInput
-                  type="text"
-                  name="mobile_number"
-                  label="Mobile Number"
-                  placeholder="Enter Mobile Number"
-                  maxLength={10}
-                  rules={[
-                    { required: true, message: "Please enter Mobile Number" },
-                    {
-                      pattern: /^[0-9]{10}$/,
-                      message: "Mobile number must be digits",
-                    },
-                  ]}
-                />
-              </div>
+              <CustomInput
+                type="text"
+                name="company_name"
+                label="Company Name"
+                placeholder="Enter Company name"
+                rules={[{ required: true, message: "Please enter Company name" }]}
+              />
+              <CustomInput
+                type="text"
+                name="mobile_number"
+                label="Mobile Number"
+                placeholder="Enter Mobile Number"
+                maxLength={10}
+                rules={[
+                  { required: true, message: "Please enter Mobile Number" },
+                  {
+                    pattern: /^[0-9]{10}$/,
+                    message: "Mobile number must be digits",
+                  },
+                ]}
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <CustomInput
