@@ -1,15 +1,18 @@
-import { Button, Card, Col, Form, message, Row, Spin, Typography } from 'antd';
-import React from 'react'
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import { addDealer, getDealerById, updateDealer } from '../../redux/slice/dealer/dealerSlice';
-import { useEffect } from 'react';
-import Icons from '../../assets/icon';
-import CustomInput from '../../component/commonComponent/CustomInput';
-import { getDistributorDropdown } from '../../redux/slice/distributor/distributorSlice';
-import { statesAndCities } from '../../constants/cities';
-
+import { Button, Card, Col, Form, message, Row, Spin, Typography } from "antd";
+import React from "react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  addDealer,
+  getDealerById,
+  updateDealer,
+} from "../../redux/slice/dealer/dealerSlice";
+import { useEffect } from "react";
+import Icons from "../../assets/icon";
+import CustomInput from "../../component/commonComponent/CustomInput";
+import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
+import { statesAndCities } from "../../constants/cities";
 
 const { Title } = Typography;
 
@@ -25,17 +28,15 @@ function AddDealer() {
   const [selectedState, setSelectedState] = useState(null);
   const [cityOptions, setCityOptions] = useState([]);
 
-  const { distributorDrop } = useSelector(
-    (state) => state.distributor
-  );
+  const { distributorDrop } = useSelector((state) => state.distributor);
 
   const { dealerById, loading, postLoading } = useSelector(
     (state) => state.dealer
   );
 
   useEffect(() => {
-    dispatch(getDistributorDropdown())
-  }, [dispatch])
+    dispatch(getDistributorDropdown());
+  }, [dispatch]);
 
   useEffect(() => {
     if (dealerId) {
@@ -141,7 +142,9 @@ function AddDealer() {
                   label: d.distributorId || d.name,
                   value: d._id,
                 }))}
-                rules={[{ required: true, message: "Please select Distributor" }]}
+                rules={[
+                  { required: true, message: "Please select Distributor" },
+                ]}
                 disabled={dealerId}
               />
             </div>
@@ -151,7 +154,9 @@ function AddDealer() {
                 name="company_name"
                 label="Company Name"
                 placeholder="Enter Company name"
-                rules={[{ required: true, message: "Please enter Company name" }]}
+                rules={[
+                  { required: true, message: "Please enter Company name" },
+                ]}
               />
               <CustomInput
                 type="text"
@@ -192,6 +197,9 @@ function AddDealer() {
                   label="Address"
                   placeholder="Street 1"
                   className="w-full"
+                  rules={[
+                    { required: true, message: "Please enter Address Line 1" },
+                  ]}
                 />
               </div>
               <div className="col-span-2">
@@ -219,22 +227,25 @@ function AddDealer() {
                 filterOption={(input, option) =>
                   option.label.toLowerCase().includes(input.toLowerCase())
                 }
+                rules={[{ required: true, message: "Please select State" }]}
               />
               <CustomInput
                 type="select"
                 name={["address", "city"]}
                 label="City"
                 placeholder="Select City"
-                options={cityOptions.map((city) => ({ label: city, value: city }))}
+                options={cityOptions.map((city) => ({
+                  label: city,
+                  value: city,
+                }))}
                 showSearch
                 filterOption={(input, option) =>
                   option.label.toLowerCase().includes(input.toLowerCase())
                 }
+                rules={[{ required: true, message: "Please select City" }]}
               />
             </div>
-            <div>
-            </div>
-
+            <div></div>
           </Form>
         )}
       </Card>
@@ -253,7 +264,7 @@ function AddDealer() {
         <Button onClick={() => navigate("/dealer")}>Cancel</Button>
       </div>
     </div>
-  )
+  );
 }
 
-export default AddDealer
+export default AddDealer;

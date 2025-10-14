@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import technicianService from "./technicianService";
+import { toast } from "react-toastify";
 
 export const addTechnician = createAsyncThunk(
   "technician/addTechnician",
@@ -105,8 +106,8 @@ const technicianSlice = createSlice({
       })
       .addCase(addTechnician.fulfilled, (state, action) => {
         state.postLoading = false;
-        state.message = action.payload?.message;
-        // toast.success(state.message);
+        state.message = action.payload.message;
+        toast.success(state.message);
       })
       .addCase(addTechnician.rejected, (state, action) => {
         state.postLoading = false;
@@ -156,9 +157,9 @@ const technicianSlice = createSlice({
       })
       .addCase(updateTechnician.fulfilled, (state, action) => {
         state.postLoading = false;
-        state.message = action.payload?.message;
-        state.singleTechnician = action.payload?.data;
-        // toast.success(state.message);
+        state.message = action.payload.message;
+        // state.singleTechnician = action.payload?.data;
+        toast.success(state.message);
       })
       .addCase(updateTechnician.rejected, (state, action) => {
         state.postLoading = false;
@@ -170,10 +171,11 @@ const technicianSlice = createSlice({
       })
       .addCase(deleteTechnician.fulfilled, (state, action) => {
         state.deleteLoading = false;
-        state.technician = state.technician.filter(
-          (item) => item._id !== action.meta.arg
-        );
-        // toast.success(action.payload?.message);
+        // state.technician = state.technician.filter(
+        //   (item) => item._id !== action.meta.arg
+        // );
+        state.message = action.payload.message;
+        toast.success(state.message);
       })
       .addCase(deleteTechnician.rejected, (state, action) => {
         state.deleteLoading = false;

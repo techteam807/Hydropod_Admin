@@ -203,39 +203,43 @@ const AddTechnician = () => {
                 )}
                 {(userType === 'Distributor' || userType === 'Dealer') && (
                   <div>
-                    <Form.Item
-                      name="distributorId"
-                      label="Select Distributor"
-                      rules={[{ required: !isEditing, message: 'Please select a distributor' }]}
-                    >
-                      <Select
-                        placeholder="Choose Distributor"
-                        onChange={handleDistributorChange}
-                        options={distributorDrop.map((d) => ({
-                          label: d.name,
-                          value: d._id,
-                        }))}
-                        disabled={isEditing}
-                      />
-                    </Form.Item>
+                   <CustomInput
+                    type="select"
+                    name="distributorId"
+                    label="Select Distributor"
+                    placeholder="Choose Distributor"
+                    options={distributorDrop.map((d) => ({
+                      label: d.name,
+                      value: d._id,
+                    }))}
+                    onChange={handleDistributorChange}
+                    rules={[{ required: !isEditing, message: 'Please select a distributor' }]}
+                    disabled={isEditing}
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
                   </div>
                 )}
                 {userType === 'Dealer' && (
                   <div>
-                    <Form.Item
-                      name="dealerId"
-                      label="Select Dealer"
-                      rules={[{ required: !isEditing, message: 'Please select a dealer' }]}
-                    >
-                      <Select
-                        placeholder="Choose Dealer"
-                        options={filteredDealers.map((d) => ({
-                          label: d.name,
-                          value: d._id,
-                        }))}
-                        disabled={isEditing}
-                      />
-                    </Form.Item>
+                    <CustomInput
+                    type="select"
+                    name="dealerId"
+                    label="Select Dealer"
+                    placeholder="Choose Dealer"
+                    options={filteredDealers.map((d) => ({
+                      label: d.name,
+                      value: d._id,
+                    }))}
+                    rules={[{ required: !isEditing, message: 'Please select a dealer' }]}
+                    disabled={isEditing}
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
                   </div>
                 )}
               </div>

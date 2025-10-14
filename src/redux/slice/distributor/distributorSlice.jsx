@@ -100,12 +100,13 @@ const distributorSlice = createSlice({
             })
             .addCase(addDistributor.fulfilled, (state, action) => {
                 state.postLoading = false;
-                state.message = action.payload?.message;
+                state.message = action.payload.message;
                 toast.success(state.message);
             })
             .addCase(addDistributor.rejected, (state, action) => {
                 state.postLoading = false;
-                // toast.error(action.payload.error);
+                state.error = action.error.message;
+                // toast.error(state.error);
             })
             .addCase(getDistributor.pending, (state) => {
                 state.loading = true;
@@ -151,7 +152,7 @@ const distributorSlice = createSlice({
             })
             .addCase(updateDistributor.fulfilled, (state, action) => {
                 state.postLoading = false;
-                state.message = action.payload?.message;
+                state.message = action.payload.message;
                 toast.success(state.message);
             })
             .addCase(updateDistributor.rejected, (state, action) => {
@@ -164,10 +165,11 @@ const distributorSlice = createSlice({
             })
             .addCase(deleteDistributor.fulfilled, (state, action) => {
                 state.deleteLoading = false;
-                state.distributor = state.distributor.filter(
-                    (item) => item._id !== action.meta.arg
-                );
-                 toast.success(action.payload?.message);
+                // state.distributor = state.distributor.filter(
+                //     (item) => item._id !== action.meta.arg
+                // );
+                state.message = action.payload.message;
+                 toast.success(state.message);
             })
             .addCase(deleteDistributor.rejected, (state, action) => {
                 state.deleteLoading = false;
