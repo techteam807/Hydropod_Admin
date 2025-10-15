@@ -102,6 +102,21 @@ export const deleteDistributor = createAsyncThunk(
     }
   }
 );
+export const restoreDistributor = createAsyncThunk(
+  "dealer/restoreDistributor",
+  async (distributorId) => {
+    try {
+      const response = await distributorService.restoreDistributor(distributorId);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
+      );
+    }
+  }
+);
 
 const distributorSlice = createSlice({
   name: "distributor",
@@ -119,6 +134,7 @@ const distributorSlice = createSlice({
     postLoading: false,
     dropLoading: false,
     deleteLoading: false,
+    restoreLoading: false,
     error: null,
   },
   reducers: {
@@ -204,8 +220,22 @@ const distributorSlice = createSlice({
         state.deleteLoading = false;
         state.error = action.error.message;
         toast.error(state.error);
+      })
+      .addCase(restoreDistributor.pending, (state) => {
+        state.restoreLoading = true;
+        state.error = null;
+      })    
+      .addCase(restoreDistributor.fulfilled, (state, action) => {
+        state.restoreLoading = false;
+        state.message = action.payload.message;
+        toast.success(state.message);
+      })
+      .addCase(restoreDistributor.rejected, (state, action) => {
+        state.restoreLoading = false;
+        state.error = action.error.message;
+        toast.error(state.error);
       });
-  },
+},
 });
 
 export const { resetDistributor } = distributorSlice.actions;

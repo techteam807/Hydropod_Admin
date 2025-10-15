@@ -93,6 +93,22 @@ export const deleteDealer = createAsyncThunk(
   }
 );
 
+export const restoreDealer = createAsyncThunk(
+  "dealer/restoreDealer",
+  async (dealerId) => {
+    try {
+      const response = await dealerService.restoreDealer(dealerId);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
+      );
+    }
+  }
+);
+
 const dealerSlice = createSlice({
   name: "dealer",
   initialState: {
@@ -109,6 +125,7 @@ const dealerSlice = createSlice({
     postLoading: false,
     dropLoading: false,
     deleteLoading: false,
+    restoreLoading: false,
     error: null,
   },
   reducers: {
@@ -192,6 +209,20 @@ const dealerSlice = createSlice({
       })
       .addCase(deleteDealer.rejected, (state, action) => {
         state.deleteLoading = false;
+        state.error = action.error.message;
+        toast.error(state.error);
+      })
+      .addCase(restoreDealer.pending, (state) => {
+        state.restoreLoading = true;
+        state.error = null;
+      })
+      .addCase(restoreDealer.fulfilled, (state, action) => {
+        state.restoreLoading = false;
+        state.message = action.payload.message;
+        toast.success(state.message);
+      })
+      .addCase(restoreDealer.rejected, (state, action) => {
+        state.restoreLoading = false;
         state.error = action.error.message;
         toast.error(state.error);
       });
