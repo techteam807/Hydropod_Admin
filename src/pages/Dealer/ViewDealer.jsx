@@ -1,10 +1,20 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { deleteDealer, getDealer } from "../../redux/slice/dealer/dealerSlice";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
 import { filteredURLParams, getQueryParams } from "../../utlis/services";
-import { Button, Card, Col, Input, Popconfirm, Row, Space, Tabs, Tag } from "antd";
+import {
+  Button,
+  Card,
+  Col,
+  Input,
+  Popconfirm,
+  Row,
+  Space,
+  Tabs,
+  Tag,
+} from "antd";
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
 import CustomInput from "../../component/commonComponent/CustomInput";
@@ -16,8 +26,10 @@ const { TabPane } = Tabs;
 const ViewDealer = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { dealer, loading, deleteLoading, pagination } = useSelector((state) => state.dealer);
-  const { distributorDrop, dropLoading } = useSelector((state) => state.distributor);
+  const { dealer, loading, deleteLoading, pagination } = useSelector(
+    (state) => state.dealer
+  );
+  const { distributorDrop } = useSelector((state) => state.distributor);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [visiable, setVisiable] = useState(false);
@@ -81,7 +93,14 @@ const ViewDealer = () => {
   const handleClear = () => {
     setFilter({ search: "", state: "", city: "", distributorId: "" });
     setCityOptions([]);
-    updateUrlParams({ page: 1, limit: 10, search: "", state: "", city: "", distributorId: "" });
+    updateUrlParams({
+      page: 1,
+      limit: 10,
+      search: "",
+      state: "",
+      city: "",
+      distributorId: "",
+    });
   };
 
   const handleSearch = () => {
@@ -99,7 +118,8 @@ const ViewDealer = () => {
       title: "Distributor Name",
       dataIndex: "distributorId",
       key: "distributorId",
-      render: (distributor) => distributor?.name || distributor?.company_name || "-",
+      render: (distributor) =>
+        distributor?.name || distributor?.company_name || "-",
     },
     { title: "Company Name", dataIndex: "company_name", key: "company_name" },
     { title: "Name", dataIndex: "name", key: "name" },
@@ -120,27 +140,26 @@ const ViewDealer = () => {
       key: "action",
       render: (_, record) => (
         <Space>
-          <Button type="default" icon={<Icons.EyeOutlined />} />
+          {/* <Button type="default" icon={<Icons.EyeOutlined />} /> */}
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
             onClick={() => navigate(`/dealer/edit/${record._id}`)}
           />
-          <Popconfirm
-            title="Are you sure you want to delete this Dealer?"
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{ loading: deleteLoading }}
-            onConfirm={async () => {
-              try {
+          {activeTab === "active" ? (
+            <Popconfirm
+              title="Are you sure you want to delete this Dealer?"
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ loading: deleteLoading }}
+              onConfirm={async () => {
                 await dispatch(deleteDealer(record._id)).unwrap();
-              } catch (err) {
-                message.error(err || "Failed to delete dealer");
-              }
-            }}
-          >
-            <Button type="default" danger icon={<Icons.DeleteOutlined />} />
-          </Popconfirm>
+                fetchDealer();
+              }}
+            >
+              <Button type="default" danger icon={<Icons.DeleteOutlined />} />
+            </Popconfirm>
+          ) : null}
         </Space>
       ),
     },
@@ -154,7 +173,7 @@ const ViewDealer = () => {
 
   return (
     <div className="m-4">
-      <Card className="mb-4">
+      <Card className="!mb-4">
         <Row align="middle" justify="space-between">
           <Col>
             <div className="text-xl font-semibold">View Dealer</div>
@@ -172,7 +191,7 @@ const ViewDealer = () => {
       </Card>
 
       {/* Filter Card */}
-      <Card className="mb-4">
+      <Card className="!mb-4">
         <Row gutter={16} align="middle">
           <Col xs={24} sm={12} md={10}>
             <Search
@@ -225,7 +244,10 @@ const ViewDealer = () => {
                 name="city"
                 label="City"
                 placeholder="Select City"
-                options={cityOptions.map((city) => ({ label: city, value: city }))}
+                options={cityOptions.map((city) => ({
+                  label: city,
+                  value: city,
+                }))}
                 value={filter.city || undefined}
                 onChange={(value) => setFilter({ ...filter, city: value })}
                 disabled={!filter.state}
@@ -243,7 +265,9 @@ const ViewDealer = () => {
                   value: d._id,
                 }))}
                 value={filter.distributorId || undefined}
-                onChange={(value) => setFilter({ ...filter, distributorId: value })}
+                onChange={(value) =>
+                  setFilter({ ...filter, distributorId: value })
+                }
               />
             </Col>
           </Row>
@@ -303,7 +327,9 @@ const ViewDealer = () => {
                       updateUrlParams({ distributorId: "" });
                     }}
                   >
-                    Distributor: {distributorDrop.find(d => d._id === filter.distributorId)?.name || "-"}
+                    Distributor:{" "}
+                    {distributorDrop.find((d) => d._id === filter.distributorId)
+                      ?.name || "-"}
                   </Tag>
                 )}
               </Space>

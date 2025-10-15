@@ -1,11 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Button, Input, Space, Popconfirm, Tag, Tabs } from "antd";
+import { useEffect, useState } from "react";
+import {
+  Card,
+  Row,
+  Col,
+  Button,
+  Input,
+  Space,
+  Popconfirm,
+  Tag,
+  Tabs,
+} from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CustomTable from "../../component/commonComponent/CustomTable";
 import Icons from "../../assets/icon";
 import { filteredURLParams, getQueryParams } from "../../utlis/services";
-import { deleteDistributor, getDistributor } from "../../redux/slice/distributor/distributorSlice";
+import {
+  deleteDistributor,
+  getDistributor,
+} from "../../redux/slice/distributor/distributorSlice";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { statesAndCities } from "../../constants/cities";
 
@@ -15,7 +28,9 @@ const { TabPane } = Tabs;
 const ViewDistributor = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { distributor, loading, deleteLoading, pagination } = useSelector((state) => state.distributor);
+  const { distributor, loading, deleteLoading, pagination } = useSelector(
+    (state) => state.distributor
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const [visiable, setVisiable] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
@@ -55,8 +70,8 @@ const ViewDistributor = () => {
   };
 
   const handleVisible = () => {
-    setVisiable(!visiable)
-  }
+    setVisiable(!visiable);
+  };
 
   const handleFilter = () => {
     const params = {
@@ -104,40 +119,35 @@ const ViewDistributor = () => {
       key: "action",
       render: (_, record) => (
         <Space>
-          <Button
+          {/* <Button
             type="default"
             icon={<Icons.EyeOutlined />}
-          // onClick={() => navigate(`/customer/view/${record._id}`)}
-          />
-
+          /> */}
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
             onClick={() => navigate(`/distributor/edit/${record._id}`)}
           />
-          <Popconfirm
-            title="Are you sure you want to delete this customer?"
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{ loading: deleteLoading }}
-            onConfirm={async () => {
-              try {
+          {activeTab === "active" ? (
+            <Popconfirm
+              title="Are you sure you want to delete this customer?"
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ loading: deleteLoading }}
+              onConfirm={async () => {
                 await dispatch(deleteDistributor(record._id)).unwrap();
-                // message.success("Customer deleted successfully");
-              } catch (err) {
-                message.error(err || "Failed to delete customer");
-              }
-            }}
-          >
-            <Button type="default" danger icon={<Icons.DeleteOutlined />} />
-          </Popconfirm>
+                fetchDistributor();
+              }}
+            >
+              <Button type="default" danger icon={<Icons.DeleteOutlined />} />
+            </Popconfirm>
+          ) : null}
         </Space>
       ),
     },
   ];
 
-  const hasActiveFilters =
-    filter.search || filter.state || filter.city;
+  const hasActiveFilters = filter.search || filter.state || filter.city;
 
   const activeDistributors = distributor?.filter((d) => d.isActive) || [];
   const inactiveDistributors = distributor?.filter((d) => !d.isActive) || [];
@@ -177,11 +187,7 @@ const ViewDistributor = () => {
             />
           </Col>
           <Col span={14} className="!space-x-2" style={{ textAlign: "right" }}>
-            <Button
-              type="default"
-              size="middle"
-              onClick={handleVisible}
-            >
+            <Button type="default" size="middle" onClick={handleVisible}>
               {visiable ? "Hide Filters" : "View Filters"}
             </Button>
             <Button
@@ -197,7 +203,6 @@ const ViewDistributor = () => {
 
         {visiable && (
           <Row className="!border-t border-gray-100 mt-2 p-4" gutter={16}>
-
             <Col xs={24} sm={12} md={6}>
               <CustomInput
                 type="select"
@@ -209,7 +214,9 @@ const ViewDistributor = () => {
                   value: state,
                 }))}
                 value={filter.state || undefined}
-                onChange={(value) => setFilter({ ...filter, state: value, city: "" })}
+                onChange={(value) =>
+                  setFilter({ ...filter, state: value, city: "" })
+                }
               />
             </Col>
 
@@ -223,9 +230,9 @@ const ViewDistributor = () => {
                 options={
                   filter.state
                     ? statesAndCities[filter.state].map((city) => ({
-                      label: city,
-                      value: city,
-                    }))
+                        label: city,
+                        value: city,
+                      }))
                     : []
                 }
                 value={filter.city || undefined}

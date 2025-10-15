@@ -1,6 +1,4 @@
 import { Button, Card, Col, Form, message, Row, Spin, Typography } from "antd";
-import React from "react";
-import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -12,7 +10,7 @@ import { useEffect } from "react";
 import Icons from "../../assets/icon";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
-import { statesAndCities } from "../../constants/cities";
+import { stateSelectionOptions } from "../../constants/cities";
 
 const { Title } = Typography;
 
@@ -21,12 +19,6 @@ function AddDealer() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { dealerId } = useParams();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  const [selectedState, setSelectedState] = useState(null);
-  const [cityOptions, setCityOptions] = useState([]);
 
   const { distributorDrop } = useSelector((state) => state.distributor);
 
@@ -81,8 +73,6 @@ function AddDealer() {
 
     try {
       if (dealerId) {
-        console.log("payload", payload);
-
         await dispatch(updateDealer({ dealerId, data: payload })).unwrap();
         navigate(-1);
       } else {
@@ -92,12 +82,6 @@ function AddDealer() {
     } catch (err) {
       message.error(err);
     }
-  };
-
-  const handleStateChange = (value) => {
-    setSelectedState(value);
-    setCityOptions(statesAndCities[value] || []);
-    form.setFieldsValue({ address: { city: null } });
   };
 
   return (
@@ -218,30 +202,21 @@ function AddDealer() {
                 name={["address", "state"]}
                 label="State"
                 placeholder="Select State"
-                options={Object.keys(statesAndCities).map((state) => ({
-                  label: state,
-                  value: state,
+                options={stateSelectionOptions?.map((state) => ({
+                  label: state.label,
+                  value: state.value,
                 }))}
                 showSearch
-                onChange={handleStateChange}
                 filterOption={(input, option) =>
                   option.label.toLowerCase().includes(input.toLowerCase())
                 }
                 rules={[{ required: true, message: "Please select State" }]}
               />
               <CustomInput
-                type="select"
+                type="text"
                 name={["address", "city"]}
                 label="City"
                 placeholder="Select City"
-                options={cityOptions.map((city) => ({
-                  label: city,
-                  value: city,
-                }))}
-                showSearch
-                filterOption={(input, option) =>
-                  option.label.toLowerCase().includes(input.toLowerCase())
-                }
                 rules={[{ required: true, message: "Please select City" }]}
               />
             </div>

@@ -4,12 +4,15 @@ import { toast } from "react-toastify";
 
 export const addTechnician = createAsyncThunk(
   "technician/addTechnician",
-  async (data, thunkAPI) => {
+  async (data) => {
     try {
-      return await technicianService.createTechnician(data);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await technicianService.createTechnician(data);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
@@ -17,12 +20,15 @@ export const addTechnician = createAsyncThunk(
 
 export const getTechnician = createAsyncThunk(
   "technician/getTechnician",
-  async (payload, thunkAPI) => {
+  async (payload) => {
     try {
-      return await technicianService.getAllTechnician(payload);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await technicianService.getAllTechnician(payload);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
@@ -30,13 +36,16 @@ export const getTechnician = createAsyncThunk(
 
 export const getTechnicianById = createAsyncThunk(
   "technician/getTechnicianById",
-  async (technicianId, thunkAPI) => {
+  async (technicianId) => {
     try {
       const payload = { technicianId };
-      return await technicianService.getAllTechnician(payload);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await technicianService.getAllTechnician(payload);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
@@ -44,20 +53,29 @@ export const getTechnicianById = createAsyncThunk(
 
 export const getCount = createAsyncThunk("technician/getCount", async () => {
   try {
-    return await technicianService.getCount();
-  } catch (err) {
-    return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
+    const response = await technicianService.getCount();
+    return response;
+  } catch (error) {
+    throw (
+      error?.response?.data?.message || error.message || "Something went wrong"
+    );
   }
 });
 
 export const updateTechnician = createAsyncThunk(
   "technician/updateTechnician",
-  async ({ technicianId, data }, thunkAPI) => {
+  async ({ technicianId, data }) => {
     try {
-      return await technicianService.updateTechnician(technicianId, data);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await technicianService.updateTechnician(
+        technicianId,
+        data
+      );
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
@@ -65,12 +83,15 @@ export const updateTechnician = createAsyncThunk(
 
 export const deleteTechnician = createAsyncThunk(
   "technician/deleteTechnician",
-  async (technicianId, thunkAPI) => {
+  async (technicianId) => {
     try {
-      return await technicianService.deleteTechnician(technicianId);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await technicianService.deleteTechnician(technicianId);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
@@ -111,7 +132,8 @@ const technicianSlice = createSlice({
       })
       .addCase(addTechnician.rejected, (state, action) => {
         state.postLoading = false;
-        // toast.error(action.payload.error);
+        state.error = action.error.message;
+        toast.error(state.error);
       })
       .addCase(getTechnician.pending, (state) => {
         state.loading = true;
@@ -128,7 +150,6 @@ const technicianSlice = createSlice({
       })
       .addCase(getTechnician.rejected, (state, action) => {
         state.loading = false;
-        // toast.error(action.payload);
       })
       .addCase(getTechnicianById.pending, (state) => {
         state.loading = true;
@@ -139,7 +160,6 @@ const technicianSlice = createSlice({
       })
       .addCase(getTechnicianById.rejected, (state, action) => {
         state.loading = false;
-        // toast.error(action.payload);
       })
       .addCase(getCount.pending, (state) => {
         state.loading = true;
@@ -150,7 +170,6 @@ const technicianSlice = createSlice({
       })
       .addCase(getCount.rejected, (state, action) => {
         state.loading = false;
-        // toast.error(action.payload);
       })
       .addCase(updateTechnician.pending, (state) => {
         state.postLoading = true;
@@ -158,12 +177,12 @@ const technicianSlice = createSlice({
       .addCase(updateTechnician.fulfilled, (state, action) => {
         state.postLoading = false;
         state.message = action.payload.message;
-        // state.singleTechnician = action.payload?.data;
         toast.success(state.message);
       })
       .addCase(updateTechnician.rejected, (state, action) => {
         state.postLoading = false;
-        // toast.error(action.payload.error);
+        state.error = action.error.message;
+        toast.error(state.error);
       })
       .addCase(deleteTechnician.pending, (state) => {
         state.deleteLoading = true;
@@ -171,16 +190,13 @@ const technicianSlice = createSlice({
       })
       .addCase(deleteTechnician.fulfilled, (state, action) => {
         state.deleteLoading = false;
-        // state.technician = state.technician.filter(
-        //   (item) => item._id !== action.meta.arg
-        // );
         state.message = action.payload.message;
         toast.success(state.message);
       })
       .addCase(deleteTechnician.rejected, (state, action) => {
         state.deleteLoading = false;
-        state.error = action.payload;
-        // toast.error(action.payload);
+        state.error = action.error.message;
+        toast.error(state.error);
       });
   },
 });

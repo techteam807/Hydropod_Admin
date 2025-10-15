@@ -15,10 +15,7 @@ const AddTechnician = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { technicianId } = useParams();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
   const { user } = useSelector((state) => state.auth);
-  const [selectedDistributor, setSelectedDistributor] = useState(null);
   const [filteredDealers, setFilteredDealers] = useState([]);
   const { technician, loading, postLoading } = useSelector((state) => state.technician);
   const [userType, setUserType] = useState('Admin');
@@ -51,17 +48,14 @@ const AddTechnician = () => {
         const mappedUserType = selectedTechnician.userParentType === 'admin' ? 'Admin' : 
                               selectedTechnician.userParentType === 'distributor' ? 'Distributor' : 'Dealer';
         setUserType(mappedUserType);
-        setSelectedDistributor(null);
         setFilteredDealers([]);
 
         let distributorId = null;
         if (selectedTechnician.userParentType === 'distributor') {
           distributorId = selectedTechnician.userParentId;
-          setSelectedDistributor(selectedTechnician.userParentId);
         } else if (selectedTechnician.userParentType === 'dealer') {
           const dealer = dealerDrop.find((d) => d._id === selectedTechnician.userParentId);
           distributorId = dealer ? dealer.distributorId : null;
-          setSelectedDistributor(distributorId);
           const dealers = dealerDrop.filter((d) => d.distributorId === distributorId);
           setFilteredDealers(dealers);
         }
@@ -81,12 +75,10 @@ const AddTechnician = () => {
   const handleUserTypeChange = (e) => {
     setUserType(e.target.value);
     form.setFieldsValue({ distributorId: null, dealerId: null });
-    setSelectedDistributor(null);
     setFilteredDealers([]);
   };
 
   const handleDistributorChange = (value) => {
-    setSelectedDistributor(value);
     const dealers = dealerDrop.filter((d) => d.distributorId === value);
     setFilteredDealers(dealers);
     form.setFieldsValue({ dealerId: null });
@@ -117,7 +109,6 @@ const AddTechnician = () => {
     try {
       if (isEditing) {
         await dispatch(updateTechnician({ technicianId, data: basePayload })).unwrap();
-        message.success('Technician updated successfully');
       } else {
         const fullPayload = {
           ...basePayload,
@@ -126,7 +117,6 @@ const AddTechnician = () => {
           userParentId,
         };
         await dispatch(addTechnician(fullPayload)).unwrap();
-        message.success('Technician added successfully');
       }
       navigate('/technician');
     } catch (err) {
@@ -168,7 +158,6 @@ const AddTechnician = () => {
             initialValues={{ userType: 'Admin' }}
           >
             <div className="gap-4">
-              {/* User Type Selection */}
               <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                 <CustomInput
                   type="radio"
@@ -187,7 +176,6 @@ const AddTechnician = () => {
                 <div className="my-4"></div>
               </div>
 
-              {/* Admin only: User Name */}
               <div className="grid grid-cols-3 gap-4">
                 {userType === 'Admin' && (
                   <div>
@@ -206,8 +194,8 @@ const AddTechnician = () => {
                    <CustomInput
                     type="select"
                     name="distributorId"
-                    label="Select Distributor"
-                    placeholder="Choose Distributor"
+                    label="Distributor"
+                    placeholder="Select Distributor"
                     options={distributorDrop.map((d) => ({
                       label: d.name,
                       value: d._id,
@@ -227,8 +215,8 @@ const AddTechnician = () => {
                     <CustomInput
                     type="select"
                     name="dealerId"
-                    label="Select Dealer"
-                    placeholder="Choose Dealer"
+                    label="Dealer"
+                    placeholder="Select Dealer"
                     options={filteredDealers.map((d) => ({
                       label: d.name,
                       value: d._id,

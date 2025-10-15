@@ -1,22 +1,15 @@
-import React, { useEffect, useState } from "react";
-import {
-  Card,
-  Row,
-  Col,
-  Button,
-  Form,
-  Spin,
-  Typography,
-  message,
-  Modal,
-  Input,
-} from "antd";
+import { useEffect } from "react";
+import { Card, Row, Col, Button, Form, Spin, Typography, message } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import Icons from "../../assets/icon";
 import { useDispatch, useSelector } from "react-redux";
-import { addDistributor, getDistributorById, updateDistributor } from "../../redux/slice/distributor/distributorSlice";
-import { statesAndCities } from "../../constants/cities";
+import {
+  addDistributor,
+  getDistributorById,
+  updateDistributor,
+} from "../../redux/slice/distributor/distributorSlice";
+import { stateSelectionOptions } from "../../constants/cities";
 
 const { Title } = Typography;
 const AddDistributor = () => {
@@ -24,12 +17,6 @@ const AddDistributor = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { distributorId } = useParams();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  const [selectedState, setSelectedState] = useState(null);
-  const [cityOptions, setCityOptions] = useState([]);
 
   const { distributorById, loading, postLoading } = useSelector(
     (state) => state.distributor
@@ -50,10 +37,10 @@ const AddDistributor = () => {
         mobile_number: distributorById?.distributor?.mobile_number || "",
         address: {
           line1: distributorById?.distributor?.address?.line1 || "",
-          line2: distributorById?.distributor?.country?.line2 || "",
-          city: distributorById?.distributor?.city || "",
-          state: distributorById?.distributor?.state || "",
-        }
+          line2: distributorById?.distributor?.address?.line2 || "",
+          city: distributorById?.distributor?.address?.city || "",
+          state: distributorById?.distributor?.address?.state || "",
+        },
       });
     }
   }, [distributorId, distributorById, form]);
@@ -73,7 +60,9 @@ const AddDistributor = () => {
     };
     try {
       if (distributorId) {
-        await dispatch(updateDistributor({ distributorId, data: payload })).unwrap();
+        await dispatch(
+          updateDistributor({ distributorId, data: payload })
+        ).unwrap();
         navigate(-1);
       } else {
         await dispatch(addDistributor(payload)).unwrap();
@@ -83,14 +72,6 @@ const AddDistributor = () => {
       message.error(err);
     }
   };
-
-  const handleStateChange = (value) => {
-    setSelectedState(value);
-    setCityOptions(statesAndCities[value] || []);
-    // Reset city when state changes
-    form.setFieldsValue({ address: { city: null } });
-  };
-
 
   return (
     <div className="!relative">
@@ -130,7 +111,9 @@ const AddDistributor = () => {
                 name="company_name"
                 label="Company Name"
                 placeholder="Enter Company name"
-                rules={[{ required: true, message: "Please enter Company name" }]}
+                rules={[
+                  { required: true, message: "Please enter Company name" },
+                ]}
               />
               <CustomInput
                 type="text"
@@ -154,11 +137,12 @@ const AddDistributor = () => {
                 label="Mobile Number"
                 placeholder="Enter Mobile Number"
                 maxLength={10}
-                rules={[{ required: true, message: "Please enter Mobile Number" },
-                {
-                  pattern: /^[0-9]{10}$/,
-                  message: "Mobile number must be digits",
-                },
+                rules={[
+                  { required: true, message: "Please enter Mobile Number" },
+                  {
+                    pattern: /^[0-9]{10}$/,
+                    message: "Mobile number must be digits",
+                  },
                 ]}
               />
             </div>
@@ -170,7 +154,7 @@ const AddDistributor = () => {
                   label="Address"
                   placeholder="Street 1"
                   className="w-full"
-                   rules={[{ required: true, message: "Please enter Address" }]}
+                  rules={[{ required: true, message: "Please enter Address" }]}
                 />
               </div>
               <div className="col-span-2">
@@ -189,33 +173,28 @@ const AddDistributor = () => {
                 name={["address", "state"]}
                 label="State"
                 placeholder="Select State"
-                options={Object.keys(statesAndCities).map((state) => ({
-                  label: state,
-                  value: state,
+                options={stateSelectionOptions?.map((state) => ({
+                  label: state.label,
+                  value: state.value,
                 }))}
                 showSearch
-                onChange={handleStateChange}
                 filterOption={(input, option) =>
                   option.label.toLowerCase().includes(input.toLowerCase())
                 }
+                rules={[{ required: true, message: "Please select State" }]}
               />
               <CustomInput
-                type="select"
+                type="text"
                 name={["address", "city"]}
                 label="City"
                 placeholder="Select City"
-                options={cityOptions.map((city) => ({ label: city, value: city }))}
-                showSearch
-                filterOption={(input, option) =>
-                  option.label.toLowerCase().includes(input.toLowerCase())
-                }
+                rules={[{ required: true, message: "Please select City" }]}
               />
             </div>
           </Form>
         )}
       </Card>
 
-      {/* Bottom Action Bar */}
       <div className="flex items-center gap-5 py-4 px-12 border-t border-l border-gray-200 w-full bg-white fixed bottom-0 shadow-[0_-1px_10px_rgba(0,0,0,0.08)] z-10">
         <Button type="primary" onClick={() => form.submit()}>
           {postLoading ? (

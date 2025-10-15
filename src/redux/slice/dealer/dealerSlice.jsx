@@ -2,86 +2,99 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 import dealerService from "./dealerService";
 
-export const addDealer = createAsyncThunk(
-  "Dealer/addDealer",
-  async (data, thunkAPI) => {
-    try {
-      return await dealerService.createDealer(data);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
-    }
+export const addDealer = createAsyncThunk("dealer/addDealer", async (data) => {
+  try {
+    const response = await dealerService.createDealer(data);
+    return response;
+  } catch (error) {
+    throw (
+      error?.response?.data?.message || error.message || "Something went wrong"
+    );
   }
-);
+});
 
 export const getDealer = createAsyncThunk(
-  "Dealer/getDealer",
-  async (payload, thunkAPI) => {
+  "dealer/getDealer",
+  async (payload) => {
     try {
-      return await dealerService.getAllDealer(payload);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await dealerService.getAllDealer(payload);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
 );
 
 export const getDealerById = createAsyncThunk(
-  "Dealer/getDealerById",
-  async (payload, thunkAPI) => {
+  "dealer/getDealerById",
+  async (payload) => {
     try {
-      return await dealerService.getDealerById(payload);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await dealerService.getDealerById(payload);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
 );
 
 export const getDealerDropdown = createAsyncThunk(
-  "Dealer/getDealerDropdown",
-  async (thunkAPI) => {
+  "dealer/getDealerDropdown",
+  async () => {
     try {
-      return await dealerService.getDealerDropdown();
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await dealerService.getDealerDropdown();
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
 );
 
 export const updateDealer = createAsyncThunk(
-  "distributor/updateDealer",
-  async ({ dealerId, data }, thunkAPI) => {
+  "dealer/updateDealer",
+  async ({ dealerId, data }) => {
     try {
-      return await dealerService.updateDealer(dealerId, data);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await dealerService.updateDealer(dealerId, data);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
 );
 
 export const deleteDealer = createAsyncThunk(
-  "distributor/deleteDealer",
-  async (dealerId, thunkAPI) => {
+  "dealer/deleteDealer",
+  async (dealerId) => {
     try {
-      return await dealerService.deleteDealer(dealerId);
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+      const response = await dealerService.deleteDealer(dealerId);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
       );
     }
   }
 );
 
 const dealerSlice = createSlice({
-  name: "Dealer",
+  name: "dealer",
   initialState: {
     dealer: [],
     dealerById: null,
@@ -116,7 +129,8 @@ const dealerSlice = createSlice({
       })
       .addCase(addDealer.rejected, (state, action) => {
         state.postLoading = false;
-        // toast.error(action.payload.error);
+        state.error = action.error.message;
+        toast.error(state.error);
       })
       .addCase(getDealer.pending, (state) => {
         state.loading = true;
@@ -133,7 +147,6 @@ const dealerSlice = createSlice({
       })
       .addCase(getDealer.rejected, (state, action) => {
         state.loading = false;
-        // toast.error(action.payload);
       })
       .addCase(getDealerById.pending, (state) => {
         state.loading = true;
@@ -144,7 +157,6 @@ const dealerSlice = createSlice({
       })
       .addCase(getDealerById.rejected, (state, action) => {
         state.loading = false;
-        // toast.error(action.payload);
       })
       .addCase(getDealerDropdown.pending, (state) => {
         state.dropLoading = true;
@@ -155,7 +167,6 @@ const dealerSlice = createSlice({
       })
       .addCase(getDealerDropdown.rejected, (state, action) => {
         state.dropLoading = false;
-        // toast.error(action.payload);
       })
       .addCase(updateDealer.pending, (state) => {
         state.postLoading = true;
@@ -167,7 +178,8 @@ const dealerSlice = createSlice({
       })
       .addCase(updateDealer.rejected, (state, action) => {
         state.postLoading = false;
-        toast.error(action.payload.error.message);
+        state.error = action.error.message;
+        toast.error(state.error);
       })
       .addCase(deleteDealer.pending, (state) => {
         state.deleteLoading = true;
@@ -175,16 +187,13 @@ const dealerSlice = createSlice({
       })
       .addCase(deleteDealer.fulfilled, (state, action) => {
         state.deleteLoading = false;
-        // state.dealer = state.dealer.filter(
-        //     (item) => item._id !== action.meta.arg
-        // );
         state.message = action.payload.message;
         toast.success(state.message);
       })
       .addCase(deleteDealer.rejected, (state, action) => {
         state.deleteLoading = false;
-        state.error = action.payload;
-        // toast.error(action.payload);
+        state.error = action.error.message;
+        toast.error(state.error);
       });
   },
 });

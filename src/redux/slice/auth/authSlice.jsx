@@ -2,16 +2,16 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authService from "../auth/authService";
 import { toast } from "react-toastify";
 
-export const loginUser = createAsyncThunk(
-  "auth/login",
-  async (credentials, { rejectWithValue }) => {
-    try {
-      return await authService.login(credentials);
-    } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
-    }
+export const loginUser = createAsyncThunk("auth/login", async (credentials) => {
+  try {
+    const response = await authService.login(credentials);
+    return response;
+  } catch (error) {
+    throw (
+      error?.response?.data?.message || error.message || "Something went wrong"
+    );
   }
-);
+});
 
 export const logoutUser = createAsyncThunk("auth/logout", async () => {
   await authService.logout();
@@ -53,7 +53,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.error.message;
+        state.error = action.error.message;
         toast.error(state.error);
       })
       // Logout
