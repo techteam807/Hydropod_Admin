@@ -18,6 +18,7 @@ import { filteredURLParams, getQueryParams } from "../../utlis/services";
 import {
   deleteDistributor,
   getDistributor,
+  restoreDistributor,
 } from "../../redux/slice/distributor/distributorSlice";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { statesAndCities } from "../../constants/cities";
@@ -28,12 +29,17 @@ const { TabPane } = Tabs;
 const ViewDistributor = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { distributor, loading, deleteLoading, pagination } = useSelector(
+  const { distributor, loading, deleteLoading, restoreLoading, pagination } = useSelector(
     (state) => state.distributor
   );
+
+  console.log("distributor", distributor);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [visiable, setVisiable] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
+  console.log("activeTab", activeTab);
+
   const [activePage, setActivePage] = useState(1);
   const [inactivePage, setInactivePage] = useState(1);
 
@@ -45,19 +51,20 @@ const ViewDistributor = () => {
 
   const fetchDistributor = () => {
     const page = parseInt(searchParams?.get("page")) || 1;
+    const isActive = activeTab === "active" ? true : false;
     const pageSize = parseInt(searchParams?.get("limit")) || pagination.limit;
 
     let payload = getQueryParams(window.location.href);
 
     if (Object.keys(payload)?.length <= 0) {
-      payload = { page, limit: pageSize };
+      payload = { page, limit: pageSize, isActive };
     }
     dispatch(getDistributor({ ...payload }));
   };
 
   useEffect(() => {
     fetchDistributor();
-  }, [dispatch, searchParams]);
+  }, [dispatch, searchParams, activeTab]);
 
   const updateUrlParams = (newParams) => {
     const params = new URLSearchParams(searchParams);
@@ -80,6 +87,7 @@ const ViewDistributor = () => {
       search: filter.search || "",
       state: filter.state || "",
       city: filter.city || "",
+      isActive: activeTab === "active" ? true : false,
     };
     updateUrlParams(params);
     setVisiable(false);
@@ -87,7 +95,7 @@ const ViewDistributor = () => {
 
   const handleClear = () => {
     setFilter({ search: "", state: "", city: "" });
-    updateUrlParams({ page: 1, limit: 10, search: "", state: "", city: "" });
+    updateUrlParams({ page: 1, limit: 10, search: "", state: "", city: "", isActive: activeTab === "active" ? true : false });
   };
 
   const handlePaginationChange = (page, pageSize) => {
@@ -96,6 +104,7 @@ const ViewDistributor = () => {
     } else {
       setInactivePage(page);
     }
+    updateUrlParams({ page, limit: pageSize, isActive: activeTab === "active" ? true : false });
   };
 
   const columns = [
@@ -142,6 +151,21 @@ const ViewDistributor = () => {
               <Button type="default" danger icon={<Icons.DeleteOutlined />} />
             </Popconfirm>
           ) : null}
+          {activeTab !== "active" ? (
+            <Popconfirm
+              title="Are you sure you want to reactivate this Distributor?"
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ loading: restoreLoading }}
+              onConfirm={async () => {
+                await dispatch(restoreDistributor(record._id)).unwrap();
+                fetchDistributor();
+              }}
+            // onClick={() => window.location.reload()}
+            >
+              <Button type="default" danger icon={<Icons.SyncOutlined />} />
+            </Popconfirm>
+          ) : null}
         </Space>
       ),
     },
@@ -149,8 +173,8 @@ const ViewDistributor = () => {
 
   const hasActiveFilters = filter.search || filter.state || filter.city;
 
-  const activeDistributors = distributor?.filter((d) => d.isActive) || [];
-  const inactiveDistributors = distributor?.filter((d) => !d.isActive) || [];
+  const activeDistributors = distributor || [];
+  const inactiveDistributors = distributor || [];
 
   return (
     <div className="m-4">
@@ -230,9 +254,9 @@ const ViewDistributor = () => {
                 options={
                   filter.state
                     ? statesAndCities[filter.state].map((city) => ({
-                        label: city,
-                        value: city,
-                      }))
+                      label: city,
+                      value: city,
+                    }))
                     : []
                 }
                 value={filter.city || undefined}
@@ -314,7 +338,7 @@ const ViewDistributor = () => {
               pagination={{
                 current: activePage,
                 pageSize: 10,
-                total: activeDistributors.length,
+                total: pagination.total || 0,
                 onChange: handlePaginationChange,
               }}
             />
@@ -328,7 +352,7 @@ const ViewDistributor = () => {
               pagination={{
                 current: inactivePage,
                 pageSize: 10,
-                total: inactiveDistributors.length,
+                total: pagination.total || 0,
                 onChange: handlePaginationChange,
               }}
             />

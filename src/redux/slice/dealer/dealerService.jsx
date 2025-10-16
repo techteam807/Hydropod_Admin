@@ -6,10 +6,10 @@ const createDealer = async (data) => {
 };
 
 const getAllDealer = async (payload) => {
-    const { search = "", state = "", city = "", distributorId = "", limit = 10, page = 1 } = payload;
+    const { search = "", state = "", city = "", distributorId = "", limit = 10, page = 1 ,isActive } = payload;
 
     const res = await api.get("/dealer/getDealers", {
-        params: { search, limit, page, state, city, distributorId },
+        params: { search, limit, page, state, city, distributorId , isActive },
     });
     return res.data;
 };
@@ -38,13 +38,19 @@ const deleteDealer = async (dealerId) => {
     return res.data;
 };
 
+const restoreDealer = async (dealerId) => {
+    const res = await api.put(`/dealer/restoreDealer/${dealerId}`);
+    return res.data;
+};
+
 const dealerService = {
     createDealer,
     getAllDealer,
     getDealerById,
     getDealerDropdown,
     updateDealer,
-    deleteDealer
+    deleteDealer,
+    restoreDealer
 };
 
 export default dealerService;

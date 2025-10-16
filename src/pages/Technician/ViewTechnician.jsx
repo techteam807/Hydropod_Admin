@@ -19,6 +19,7 @@ import CustomTable from "../../component/commonComponent/CustomTable";
 import {
   deleteTechnician,
   getTechnician,
+  restoreTechnician,
 } from "../../redux/slice/technician/technicianSlice";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
@@ -30,9 +31,12 @@ const { TabPane } = Tabs;
 const ViewTechnician = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { technician, loading, pagination, deleteLoading } = useSelector(
+  const { technician, loading, pagination, deleteLoading , restoreLoading} = useSelector(
     (state) => state.technician
   );
+
+  console.log("technician", technician);
+  
   const { distributorDrop } = useSelector((state) => state.distributor);
   const { dealerDrop } = useSelector((state) => state.dealer);
   const { user } = useSelector((state) => state.auth);
@@ -49,19 +53,20 @@ const ViewTechnician = () => {
 
   const fetchTechnician = () => {
     const page = parseInt(searchParams?.get("page")) || 1;
+    const isActive = activeTab === "active" ? true : false;
     const pageSize = parseInt(searchParams?.get("limit") || pagination.limit);
 
     let payload = getQueryParams(window.location.href);
 
     if (Object.keys(payload)?.length <= 0) {
-      payload = { page, limit: pageSize };
+      payload = { page, limit: pageSize , isActive  };
     }
     dispatch(getTechnician({ ...payload }));
   };
 
   useEffect(() => {
     fetchTechnician();
-  }, [dispatch, searchParams]);
+  }, [dispatch, searchParams, activeTab]);
 
   useEffect(() => {
     dispatch(getDistributorDropdown());
@@ -92,6 +97,7 @@ const ViewTechnician = () => {
       search: filter.search || "",
       userParentType: filter.userParentType || "",
       userParentId: userParentId,
+      isActive: activeTab === "active" ? true : false,
     };
     updateUrlParams(params);
     setVisiable(false);
@@ -105,6 +111,7 @@ const ViewTechnician = () => {
       search: "",
       userParentType: "",
       userParentId: "",
+      isActive: activeTab === "active" ? true : false,
     });
     fetchTechnician({ page: 1, limit: 10 });
   };
@@ -115,7 +122,7 @@ const ViewTechnician = () => {
     } else {
       setInactivePage(page);
     }
-    updateUrlParams({ page, limit: pageSize });
+    updateUrlParams({ page, limit: pageSize, isActive: activeTab === "active" ? true : false  });
   };
 
   const columns = [
@@ -165,6 +172,21 @@ const ViewTechnician = () => {
               <Button type="default" danger icon={<Icons.DeleteOutlined />} />
             </Popconfirm>
           ) : null}
+           {activeTab !== "active" ? (
+                      <Popconfirm
+                        title="Are you sure you want to reactivate this technician?"
+                        okText="Yes"
+                        cancelText="No"
+                        okButtonProps={{ loading: restoreLoading }}
+                        onConfirm={async () => {
+                          await dispatch(restoreTechnician(record._id)).unwrap();
+                          fetchTechnician();
+                        }}
+                      // onClick={() => window.location.reload()}
+                      >
+                        <Button type="default" danger icon={<Icons.SyncOutlined />} />
+                      </Popconfirm>
+                    ) : null}
         </Space>
       ),
     },
@@ -173,8 +195,8 @@ const ViewTechnician = () => {
   const hasActiveFilters =
     filter.search || filter.userParentType || filter.userParentId;
 
-  const activeTechnician = technician?.filter((d) => d.isActive) || [];
-  const inactiveTechnician = technician?.filter((d) => !d.isActive) || [];
+  const activeTechnician = technician || [];
+  const inactiveTechnician = technician || [];
 
   return (
     <div className="m-4">
@@ -375,7 +397,7 @@ const ViewTechnician = () => {
               pagination={{
                 current: activePage,
                 pageSize: 10,
-                total: activeTechnician.length,
+                total: pagination.total || 0,
                 onChange: handlePaginationChange,
               }}
             />
@@ -389,7 +411,7 @@ const ViewTechnician = () => {
               pagination={{
                 current: inactivePage,
                 pageSize: 10,
-                total: inactiveTechnician.length,
+                total: pagination.total || 0,
                 onChange: handlePaginationChange,
               }}
             />

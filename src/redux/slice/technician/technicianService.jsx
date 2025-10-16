@@ -6,10 +6,10 @@ const createTechnician = async (data) => {
 };
 
 const getAllTechnician = async (payload) => {
-    const { search = "", limit = 10, page = 1, userParentType = "", userParentId = "", technicianId = "" } = payload;
+    const { search = "", limit = 10, page = 1, userParentType = "", userParentId = "", technicianId = "", isActive } = payload;
 
     const res = await api.get("/user/getTechnicians", {
-        params: { search, limit, page, userParentType, userParentId, technicianId },
+        params: { search, limit, page, userParentType, userParentId, technicianId , isActive },
     });
     return res.data;
 };
@@ -27,14 +27,18 @@ const deleteTechnician = async (technicianId) => {
     const res = await api.put(`/user/deleteTechnician/${technicianId}`);
     return res.data;
 };
-
+const restoreTechnician = async (technicianId) => {
+    const res = await api.put(`/user/restoreTechnician/${technicianId}`);
+    return res.data;
+};
 
 const technicianService = {
     createTechnician,
     getAllTechnician,
     getCount,
     deleteTechnician,
-    updateTechnician
+    updateTechnician,
+    restoreTechnician
 };
 
 export default technicianService;

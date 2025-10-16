@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { deleteDealer, getDealer } from "../../redux/slice/dealer/dealerSlice";
+import { deleteDealer, getDealer, restoreDealer } from "../../redux/slice/dealer/dealerSlice";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
 import { filteredURLParams, getQueryParams } from "../../utlis/services";
 import {
@@ -26,7 +26,7 @@ const { TabPane } = Tabs;
 const ViewDealer = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { dealer, loading, deleteLoading, pagination } = useSelector(
+  const { dealer, loading, deleteLoading, restoreLoading, pagination } = useSelector(
     (state) => state.dealer
   );
   const { distributorDrop } = useSelector((state) => state.distributor);
@@ -51,18 +51,19 @@ const ViewDealer = () => {
   // Fetch dealers
   const fetchDealer = () => {
     const page = parseInt(searchParams?.get("page")) || 1;
+    const isActive = activeTab === "active" ? true : false;
     const pageSize = parseInt(searchParams?.get("limit")) || pagination.limit;
 
     let payload = getQueryParams(window.location.href);
     if (Object.keys(payload)?.length <= 0) {
-      payload = { page, limit: pageSize };
+      payload = { page, limit: pageSize , isActive };
     }
     dispatch(getDealer({ ...payload }));
   };
 
   useEffect(() => {
     fetchDealer();
-  }, [dispatch, searchParams]);
+  }, [dispatch, searchParams, activeTab]);
 
   // Fetch distributor dropdown
   useEffect(() => {
@@ -85,13 +86,14 @@ const ViewDealer = () => {
       state: filter.state || "",
       city: filter.city || "",
       distributorId: filter.distributorId || "",
+      isActive: activeTab === "active" ? true : false,
     };
     updateUrlParams(params);
     setVisiable(false);
   };
 
   const handleClear = () => {
-    setFilter({ search: "", state: "", city: "", distributorId: "" });
+    setFilter({ search: "", state: "", city: "", distributorId: ""  });
     setCityOptions([]);
     updateUrlParams({
       page: 1,
@@ -100,6 +102,7 @@ const ViewDealer = () => {
       state: "",
       city: "",
       distributorId: "",
+      isActive: activeTab === "active" ? true : false,
     });
   };
 
@@ -107,9 +110,13 @@ const ViewDealer = () => {
     updateUrlParams({ page: 1, limit: 10, search: filter.search });
   };
 
-  const handlePaginationChange = (page) => {
-    if (activeTab === "active") setActivePage(page);
-    else setInactivePage(page);
+  const handlePaginationChange = (page, pageSize) => {
+    if (activeTab === "active") {
+      setActivePage(page);
+    } else {
+      setInactivePage(page);
+    }
+    updateUrlParams({ page, limit: pageSize, isActive: activeTab === "active" ? true : false  });
   };
 
   // Columns
@@ -150,7 +157,7 @@ const ViewDealer = () => {
             <Popconfirm
               title="Are you sure you want to delete this Dealer?"
               okText="Yes"
-              cancelText="No"
+              // cancelText="No"
               okButtonProps={{ loading: deleteLoading }}
               onConfirm={async () => {
                 await dispatch(deleteDealer(record._id)).unwrap();
@@ -158,6 +165,21 @@ const ViewDealer = () => {
               }}
             >
               <Button type="default" danger icon={<Icons.DeleteOutlined />} />
+            </Popconfirm>
+          ) : null}
+          {activeTab !== "active" ? (
+            <Popconfirm
+              title="Are you sure you want to reactivate this Dealer?"
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ loading: restoreLoading }}
+              onConfirm={async () => {
+                await dispatch(restoreDealer(record._id)).unwrap();
+                fetchDealer();
+              }}
+              // onClick={() => window.location.reload()}
+            >
+              <Button type="default" danger icon={<Icons.SyncOutlined />} />
             </Popconfirm>
           ) : null}
         </Space>
@@ -168,8 +190,8 @@ const ViewDealer = () => {
   const hasActiveFilters =
     filter.search || filter.state || filter.city || filter.distributorId;
 
-  const activeDealer = dealer?.filter((d) => d.isActive) || [];
-  const inactiveDealer = dealer?.filter((d) => !d.isActive) || [];
+  const activeDealer = dealer || [];
+  const inactiveDealer = dealer || [];
 
   return (
     <div className="m-4">
@@ -356,7 +378,7 @@ const ViewDealer = () => {
               pagination={{
                 current: activePage,
                 pageSize: 10,
-                total: activeDealer.length,
+                total: pagination.total || 0,
                 onChange: handlePaginationChange,
               }}
             />
@@ -370,7 +392,7 @@ const ViewDealer = () => {
               pagination={{
                 current: inactivePage,
                 pageSize: 10,
-                total: inactiveDealer.length,
+                total: pagination.total || 0,
                 onChange: handlePaginationChange,
               }}
             />
