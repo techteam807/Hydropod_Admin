@@ -27,14 +27,18 @@ const deleteTechnician = async (technicianId) => {
     const res = await api.put(`/user/deleteTechnician/${technicianId}`);
     return res.data;
 };
-
+const restoreTechnician = async (technicianId) => {
+    const res = await api.put(`/user/restoreTechnician/${technicianId}`);
+    return res.data;
+};
 
 const technicianService = {
     createTechnician,
     getAllTechnician,
     getCount,
     deleteTechnician,
-    updateTechnician
+    updateTechnician,
+    restoreTechnician
 };
 
 export default technicianService;

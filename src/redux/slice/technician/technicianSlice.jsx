@@ -96,6 +96,21 @@ export const deleteTechnician = createAsyncThunk(
     }
   }
 );
+export const restoreTechnician = createAsyncThunk(
+  "Technician/restoreTechnician",
+  async (technicianId) => {
+    try {
+      const response = await technicianService.restoreTechnician(technicianId);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
+      );
+    }
+  }
+);
 
 const technicianSlice = createSlice({
   name: "technician",
@@ -112,6 +127,7 @@ const technicianSlice = createSlice({
     loading: false,
     postLoading: false,
     deleteLoading: false,
+    restoreLoading: false,
     error: null,
   },
   reducers: {
@@ -197,7 +213,21 @@ const technicianSlice = createSlice({
         state.deleteLoading = false;
         state.error = action.error.message;
         toast.error(state.error);
-      });
+      })
+       .addCase(restoreTechnician.pending, (state) => {
+              state.restoreLoading = true;
+              state.error = null;
+            })    
+            .addCase(restoreTechnician.fulfilled, (state, action) => {
+              state.restoreLoading = false;
+              state.message = action.payload.message;
+              toast.success(state.message);
+            })
+            .addCase(restoreTechnician.rejected, (state, action) => {
+              state.restoreLoading = false;
+              state.error = action.error.message;
+              toast.error(state.error);
+            });
   },
 });
 

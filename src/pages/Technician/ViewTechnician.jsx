@@ -19,6 +19,7 @@ import CustomTable from "../../component/commonComponent/CustomTable";
 import {
   deleteTechnician,
   getTechnician,
+  restoreTechnician,
 } from "../../redux/slice/technician/technicianSlice";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
@@ -30,7 +31,7 @@ const { TabPane } = Tabs;
 const ViewTechnician = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { technician, loading, pagination, deleteLoading } = useSelector(
+  const { technician, loading, pagination, deleteLoading , restoreLoading} = useSelector(
     (state) => state.technician
   );
 
@@ -171,6 +172,21 @@ const ViewTechnician = () => {
               <Button type="default" danger icon={<Icons.DeleteOutlined />} />
             </Popconfirm>
           ) : null}
+           {activeTab !== "active" ? (
+                      <Popconfirm
+                        title="Are you sure you want to reactivate this technician?"
+                        okText="Yes"
+                        cancelText="No"
+                        okButtonProps={{ loading: restoreLoading }}
+                        onConfirm={async () => {
+                          await dispatch(restoreTechnician(record._id)).unwrap();
+                          fetchTechnician();
+                        }}
+                      // onClick={() => window.location.reload()}
+                      >
+                        <Button type="default" danger icon={<Icons.SyncOutlined />} />
+                      </Popconfirm>
+                    ) : null}
         </Space>
       ),
     },
