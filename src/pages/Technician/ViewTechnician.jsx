@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { filteredURLParams, getQueryParams } from "../../utlis/services";
+import {
+  deleteTechnician,
+  getTechnician,
+  restoreTechnician,
+} from "../../redux/slice/technician/technicianSlice";
+import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
+import { getDealerDropdown } from "../../redux/slice/dealer/dealerSlice";
+import { filteredURLParams } from "../../utlis/services";
 import {
   Button,
   Card,
@@ -12,18 +19,10 @@ import {
   Space,
   Tabs,
   Tag,
-  message,
 } from "antd";
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
-import {
-  deleteTechnician,
-  getTechnician,
-  restoreTechnician,
-} from "../../redux/slice/technician/technicianSlice";
 import CustomInput from "../../component/commonComponent/CustomInput";
-import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
-import { getDealerDropdown } from "../../redux/slice/dealer/dealerSlice";
 
 const { Search } = Input;
 const { TabPane } = Tabs;
@@ -31,17 +30,21 @@ const { TabPane } = Tabs;
 const ViewTechnician = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { technician, loading, pagination, deleteLoading , restoreLoading} = useSelector(
-    (state) => state.technician
-  );
 
-  console.log("technician", technician);
-  
+  const {
+    activeTechnician,
+    inactiveTechnician,
+    loading,
+    pagination,
+    deleteLoading,
+    restoreLoading,
+  } = useSelector((state) => state.technician);
   const { distributorDrop } = useSelector((state) => state.distributor);
   const { dealerDrop } = useSelector((state) => state.dealer);
   const { user } = useSelector((state) => state.auth);
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const [visiable, setVisiable] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
   const [activePage, setActivePage] = useState(1);
   const [inactivePage, setInactivePage] = useState(1);
@@ -51,56 +54,56 @@ const ViewTechnician = () => {
     userParentId: searchParams.get("userParentId") || "",
   });
 
-  const fetchTechnician = () => {
-    const page = parseInt(searchParams?.get("page")) || 1;
-    const isActive = activeTab === "active" ? true : false;
-    const pageSize = parseInt(searchParams?.get("limit") || pagination.limit);
-
-    let payload = getQueryParams(window.location.href);
-
-    if (Object.keys(payload)?.length <= 0) {
-      payload = { page, limit: pageSize , isActive  };
-    }
-    dispatch(getTechnician({ ...payload }));
-  };
-
-  useEffect(() => {
-    fetchTechnician();
-  }, [dispatch, searchParams, activeTab]);
-
-  useEffect(() => {
-    dispatch(getDistributorDropdown());
-    dispatch(getDealerDropdown());
-  }, [dispatch]);
-
   const updateUrlParams = (newParams) => {
     const params = new URLSearchParams(searchParams);
     const filtered = filteredURLParams(params, newParams);
     setSearchParams(filtered);
   };
 
+  const fetchTechnician = () => {
+    const isActive = activeTab === "active";
+    const page = isActive ? activePage : inactivePage;
+    const pageSize =
+      parseInt(searchParams?.get("limit")) || pagination.limit || 10;
+
+    const payload = {
+      search: filter.search || "",
+      limit: pageSize,
+      page,
+      userParentType: filter.userParentType || "",
+      userParentId: filter.userParentId || "",
+      isActive,
+    };
+
+    dispatch(getTechnician(payload));
+  };
+
+  useEffect(() => {
+    fetchTechnician();
+  }, [activeTab, activePage, inactivePage, searchParams]);
+
+  useEffect(() => {
+    dispatch(getDistributorDropdown());
+    dispatch(getDealerDropdown());
+  }, [dispatch]);
+
   const handleSearch = () => {
     updateUrlParams({ page: 1, limit: 10, search: filter.search });
   };
 
-  const handleVisible = () => {
-    setVisiable(!visiable);
-  };
-
   const handleFilter = () => {
     const userParentId =
-      filter.userParentType === "Admin" ? user._id : filter.userParentId || "";
+      filter.userParentType === "admin" ? user._id : filter.userParentId || "";
 
-    const params = {
+    updateUrlParams({
       page: 1,
       limit: 10,
       search: filter.search || "",
       userParentType: filter.userParentType || "",
-      userParentId: userParentId,
-      isActive: activeTab === "active" ? true : false,
-    };
-    updateUrlParams(params);
-    setVisiable(false);
+      userParentId,
+      isActive: activeTab === "active",
+    });
+    setVisible(false);
   };
 
   const handleClear = () => {
@@ -111,18 +114,19 @@ const ViewTechnician = () => {
       search: "",
       userParentType: "",
       userParentId: "",
-      isActive: activeTab === "active" ? true : false,
+      isActive: activeTab === "active",
     });
-    fetchTechnician({ page: 1, limit: 10 });
   };
 
   const handlePaginationChange = (page, pageSize) => {
-    if (activeTab === "active") {
-      setActivePage(page);
-    } else {
-      setInactivePage(page);
-    }
-    updateUrlParams({ page, limit: pageSize, isActive: activeTab === "active" ? true : false  });
+    if (activeTab === "active") setActivePage(page);
+    else setInactivePage(page);
+
+    updateUrlParams({
+      page,
+      limit: pageSize,
+      isActive: activeTab === "active",
+    });
   };
 
   const columns = [
@@ -134,12 +138,12 @@ const ViewTechnician = () => {
       dataIndex: "userParentType",
       key: "userParentType",
       render: (type) => {
-        let color = "gray"; // default color
-        if (type === "admin") color = "blue";
-        else if (type === "distributor") color = "green";
-        else if (type === "dealer") color = "orange";
-
-        return <Tag color={color}>{type.toUpperCase()}</Tag>;
+        const colorMap = {
+          admin: "blue",
+          distributor: "green",
+          dealer: "orange",
+        };
+        return <Tag color={colorMap[type] || "gray"}>{type?.toUpperCase()}</Tag>;
       },
     },
     {
@@ -147,12 +151,6 @@ const ViewTechnician = () => {
       key: "action",
       render: (_, record) => (
         <Space>
-          {/* <Button
-            type="default"
-            icon={<Icons.EyeOutlined />}
-            onClick={() => navigate(`/customer/view/${record._id}`)}
-          /> */}
-
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
@@ -160,7 +158,7 @@ const ViewTechnician = () => {
           />
           {activeTab === "active" ? (
             <Popconfirm
-              title="Are you sure you want to delete this technician?"
+              title="Delete this technician?"
               okText="Yes"
               cancelText="No"
               okButtonProps={{ loading: deleteLoading }}
@@ -171,22 +169,20 @@ const ViewTechnician = () => {
             >
               <Button type="default" danger icon={<Icons.DeleteOutlined />} />
             </Popconfirm>
-          ) : null}
-           {activeTab !== "active" ? (
-                      <Popconfirm
-                        title="Are you sure you want to reactivate this technician?"
-                        okText="Yes"
-                        cancelText="No"
-                        okButtonProps={{ loading: restoreLoading }}
-                        onConfirm={async () => {
-                          await dispatch(restoreTechnician(record._id)).unwrap();
-                          fetchTechnician();
-                        }}
-                      // onClick={() => window.location.reload()}
-                      >
-                        <Button type="default" danger icon={<Icons.SyncOutlined />} />
-                      </Popconfirm>
-                    ) : null}
+          ) : (
+            <Popconfirm
+              title="Reactivate this technician?"
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ loading: restoreLoading }}
+              onConfirm={async () => {
+                await dispatch(restoreTechnician(record._id)).unwrap();
+                fetchTechnician();
+              }}
+            >
+              <Button type="default" icon={<Icons.SyncOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -195,59 +191,55 @@ const ViewTechnician = () => {
   const hasActiveFilters =
     filter.search || filter.userParentType || filter.userParentId;
 
-  const activeTechnician = technician || [];
-  const inactiveTechnician = technician || [];
-
   return (
     <div className="m-4">
       <Card className="!mb-4">
         <Row align="middle" justify="space-between">
           <Col>
-            <div className="text-xl font-semibold">View Technician</div>
+            <div className="text-xl font-semibold">View Technicians</div>
           </Col>
           <Col>
-            <Space size="middle">
-              <Button
-                type="primary"
-                icon={<Icons.PlusCircleOutlined />}
-                onClick={() => navigate("/technician/add")}
-              >
-                Add Technician
-              </Button>
-            </Space>
+            <Button
+              type="primary"
+              icon={<Icons.PlusCircleOutlined />}
+              onClick={() => navigate("/technician/add")}
+            >
+              Add Technician
+            </Button>
           </Col>
         </Row>
       </Card>
 
+      {/* Filters */}
       <Card className="!mb-4">
         <Row gutter={16} align="middle">
-          <Col span={10}>
+          <Col xs={24} sm={12} md={10}>
             <Search
               placeholder="Search Technician..."
               value={filter.search}
-              onChange={(e) => setFilter({ search: e.target.value })}
+              onChange={(e) => setFilter({ ...filter, search: e.target.value })}
               onSearch={handleSearch}
               allowClear
-              onClear={handleClear}
-              style={{ borderRadius: 6, height: 36 }}
             />
           </Col>
-          <Col span={14} className="!space-x-2" style={{ textAlign: "right" }}>
-            <Button type="default" size="middle" onClick={handleVisible}>
-              {visiable ? "Hide Filters" : "View Filters"}
-            </Button>
-            <Button
-              type="primary"
-              icon={<Icons.FilterOutlined />}
-              size="middle"
-              onClick={handleFilter}
-            >
-              Apply Filter
-            </Button>
+          <Col xs={24} sm={12} md={14} style={{ textAlign: "right" }}>
+            <Space>
+              <Button onClick={() => setVisible(!visible)}>
+                {visible ? "Hide Filters" : "View Filters"}
+              </Button>
+              <Button
+                type="primary"
+                icon={<Icons.FilterOutlined />}
+                onClick={handleFilter}
+              >
+                Apply Filter
+              </Button>
+            </Space>
           </Col>
         </Row>
-        {visiable && (
-          <Row className="!border-t border-gray-100 mt-2 p-4" gutter={16}>
+
+        {visible && (
+          <Row className="mt-2 p-4 border-t border-gray-100" gutter={16}>
             <Col xs={24} sm={12} md={6}>
               <CustomInput
                 type="select"
@@ -260,41 +252,30 @@ const ViewTechnician = () => {
                   { label: "Dealer", value: "dealer" },
                 ]}
                 value={filter.userParentType || undefined}
-                onChange={(value) =>
-                  setFilter({
-                    ...filter,
-                    userParentType: value,
-                    userParentId: "",
-                  })
+                onChange={(v) =>
+                  setFilter({ ...filter, userParentType: v, userParentId: "" })
                 }
               />
             </Col>
-            {/* {filter.userParentType === "admin" && (
-              <Col xs={24} sm={12} md={6}>
-                <CustomInput type="text" label="Admin" value={user._id} disabled />
-              </Col>
-            )} */}
-            {filter.userParentType === "distributor" &&
-              distributorDrop.length > 0 && (
-                <Col xs={24} sm={12} md={6}>
-                  <CustomInput
-                    type="select"
-                    name="userParentId"
-                    label="Distributor"
-                    placeholder="Select Distributor"
-                    options={distributorDrop.map((d) => ({
-                      label: d.name || d.company_name,
-                      value: d._id,
-                    }))}
-                    value={filter.userParentId || undefined}
-                    onChange={(value) =>
-                      setFilter({ ...filter, userParentId: value })
-                    }
-                  />
-                </Col>
-              )}
 
-            {filter.userParentType === "dealer" && dealerDrop.length > 0 && (
+            {filter.userParentType === "distributor" && (
+              <Col xs={24} sm={12} md={6}>
+                <CustomInput
+                  type="select"
+                  name="userParentId"
+                  label="Distributor"
+                  placeholder="Select Distributor"
+                  options={distributorDrop.map((d) => ({
+                    label: d.name || d.company_name,
+                    value: d._id,
+                  }))}
+                  value={filter.userParentId || undefined}
+                  onChange={(v) => setFilter({ ...filter, userParentId: v })}
+                />
+              </Col>
+            )}
+
+            {filter.userParentType === "dealer" && (
               <Col xs={24} sm={12} md={6}>
                 <CustomInput
                   type="select"
@@ -306,86 +287,32 @@ const ViewTechnician = () => {
                     value: d._id,
                   }))}
                   value={filter.userParentId || undefined}
-                  onChange={(value) =>
-                    setFilter({ ...filter, userParentId: value })
-                  }
+                  onChange={(v) => setFilter({ ...filter, userParentId: v })}
                 />
               </Col>
             )}
           </Row>
         )}
+
         {hasActiveFilters && (
-          <Row
-            className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md"
-            gutter={8}
-            align="middle"
-          >
+          <Row className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
             <Col flex="auto">
               <Space wrap>
                 {filter.search && (
-                  <Tag
-                    color="blue"
-                    closable
-                    onClose={() => {
-                      setFilter({ ...filter, search: "" });
-                      updateUrlParams({ search: "" });
-                    }}
-                  >
+                  <Tag color="blue" closable onClose={() => handleClear()}>
                     Search: {filter.search}
-                  </Tag>
-                )}
-                {filter.state && (
-                  <Tag
-                    color="green"
-                    closable
-                    onClose={() => {
-                      setFilter({ ...filter, state: "", city: "" });
-                      setCityOptions([]);
-                      updateUrlParams({ state: "", city: "" });
-                    }}
-                  >
-                    State: {filter.state}
-                  </Tag>
-                )}
-                {filter.city && (
-                  <Tag
-                    color="orange"
-                    closable
-                    onClose={() => {
-                      setFilter({ ...filter, city: "" });
-                      updateUrlParams({ city: "" });
-                    }}
-                  >
-                    City: {filter.city}
-                  </Tag>
-                )}
-                {filter.userParentType && (
-                  <Tag
-                    color="purple"
-                    closable
-                    onClose={() => {
-                      setFilter({
-                        ...filter,
-                        userParentType: "",
-                        userParentId: "",
-                      });
-                      updateUrlParams({ userParentType: "", userParentId: "" });
-                    }}
-                  >
-                    Parent Role: {filter.userParentType}
                   </Tag>
                 )}
               </Space>
             </Col>
             <Col>
-              <Button type="default" size="small" onClick={handleClear}>
-                Clear All
-              </Button>
+              <Button onClick={handleClear}>Clear All</Button>
             </Col>
           </Row>
         )}
       </Card>
 
+      {/* Tabs */}
       <Card>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab="Active" key="active">
@@ -402,6 +329,7 @@ const ViewTechnician = () => {
               }}
             />
           </TabPane>
+
           <TabPane tab="Inactive" key="inactive">
             <CustomTable
               tableId="inactiveTechnician"

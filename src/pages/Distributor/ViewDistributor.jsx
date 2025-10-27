@@ -14,7 +14,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CustomTable from "../../component/commonComponent/CustomTable";
 import Icons from "../../assets/icon";
-import { filteredURLParams, getQueryParams } from "../../utlis/services";
+import { filteredURLParams } from "../../utlis/services";
 import {
   deleteDistributor,
   getDistributor,
@@ -29,17 +29,19 @@ const { TabPane } = Tabs;
 const ViewDistributor = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { distributor, loading, deleteLoading, restoreLoading, pagination } = useSelector(
-    (state) => state.distributor
-  );
 
-  console.log("distributor", distributor);
+  const {
+    activeDistributors,
+    inactiveDistributors,
+    loading,
+    deleteLoading,
+    restoreLoading,
+    pagination,
+  } = useSelector((state) => state.distributor);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [visiable, setVisiable] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
-  console.log("activeTab", activeTab);
-
   const [activePage, setActivePage] = useState(1);
   const [inactivePage, setInactivePage] = useState(1);
 
@@ -49,23 +51,41 @@ const ViewDistributor = () => {
     city: searchParams.get("city") || "",
   });
 
+  // ✅ Fetch distributors based on tab and filter
   const fetchDistributor = () => {
-    const page = parseInt(searchParams?.get("page")) || 1;
-    const isActive = activeTab === "active" ? true : false;
-    const pageSize = parseInt(searchParams?.get("limit")) || pagination.limit;
+    const isActive = activeTab === "active";
+    const page = isActive ? activePage : inactivePage;
+    const pageSize =
+      parseInt(searchParams?.get("limit")) || pagination.limit || 10;
 
-    let payload = getQueryParams(window.location.href);
+    const payload = {
+      search: filter.search || "",
+      state: filter.state || "",
+      city: filter.city || "",
+      limit: pageSize,
+      page,
+      isActive,
+    };
 
-    if (Object.keys(payload)?.length <= 0) {
-      payload = { page, limit: pageSize, isActive };
-    }
-    dispatch(getDistributor({ ...payload }));
+    dispatch(getDistributor(payload));
   };
 
+  // ✅ Fetch when tab, page, or filters change
   useEffect(() => {
     fetchDistributor();
-  }, [dispatch, searchParams, activeTab]);
+  }, [activeTab, activePage, inactivePage, searchParams]);
 
+  // ✅ Reset pagination when switching tabs
+  useEffect(() => {
+    if (activeTab === "active") {
+      setActivePage(1);
+    } else {
+      setInactivePage(1);
+    }
+    fetchDistributor();
+  }, [activeTab]);
+
+  // ✅ URL helpers
   const updateUrlParams = (newParams) => {
     const params = new URLSearchParams(searchParams);
     const filtered = filteredURLParams(params, newParams);
@@ -87,7 +107,7 @@ const ViewDistributor = () => {
       search: filter.search || "",
       state: filter.state || "",
       city: filter.city || "",
-      isActive: activeTab === "active" ? true : false,
+      isActive: activeTab === "active",
     };
     updateUrlParams(params);
     setVisiable(false);
@@ -95,7 +115,14 @@ const ViewDistributor = () => {
 
   const handleClear = () => {
     setFilter({ search: "", state: "", city: "" });
-    updateUrlParams({ page: 1, limit: 10, search: "", state: "", city: "", isActive: activeTab === "active" ? true : false });
+    updateUrlParams({
+      page: 1,
+      limit: 10,
+      search: "",
+      state: "",
+      city: "",
+      isActive: activeTab === "active",
+    });
   };
 
   const handlePaginationChange = (page, pageSize) => {
@@ -104,7 +131,12 @@ const ViewDistributor = () => {
     } else {
       setInactivePage(page);
     }
-    updateUrlParams({ page, limit: pageSize, isActive: activeTab === "active" ? true : false });
+
+    updateUrlParams({
+      page,
+      limit: pageSize,
+      isActive: activeTab === "active",
+    });
   };
 
   const columns = [
@@ -122,16 +154,11 @@ const ViewDistributor = () => {
       key: "state",
       render: (_, record) => record.address?.state || "-",
     },
-    // { title: "Country", dataIndex: "country", key: "country" },
     {
       title: "Action",
       key: "action",
       render: (_, record) => (
         <Space>
-          {/* <Button
-            type="default"
-            icon={<Icons.EyeOutlined />}
-          /> */}
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
@@ -139,7 +166,7 @@ const ViewDistributor = () => {
           />
           {activeTab === "active" ? (
             <Popconfirm
-              title="Are you sure you want to delete this customer?"
+              title="Are you sure you want to delete this distributor?"
               okText="Yes"
               cancelText="No"
               okButtonProps={{ loading: deleteLoading }}
@@ -150,10 +177,9 @@ const ViewDistributor = () => {
             >
               <Button type="default" danger icon={<Icons.DeleteOutlined />} />
             </Popconfirm>
-          ) : null}
-          {activeTab !== "active" ? (
+          ) : (
             <Popconfirm
-              title="Are you sure you want to reactivate this Distributor?"
+              title="Are you sure you want to reactivate this distributor?"
               okText="Yes"
               cancelText="No"
               okButtonProps={{ loading: restoreLoading }}
@@ -161,11 +187,10 @@ const ViewDistributor = () => {
                 await dispatch(restoreDistributor(record._id)).unwrap();
                 fetchDistributor();
               }}
-            // onClick={() => window.location.reload()}
             >
               <Button type="default" danger icon={<Icons.SyncOutlined />} />
             </Popconfirm>
-          ) : null}
+          )}
         </Space>
       ),
     },
@@ -173,51 +198,48 @@ const ViewDistributor = () => {
 
   const hasActiveFilters = filter.search || filter.state || filter.city;
 
-  const activeDistributors = distributor || [];
-  const inactiveDistributors = distributor || [];
-
   return (
     <div className="m-4">
+      {/* Header */}
       <Card className="!mb-4">
         <Row align="middle" justify="space-between">
           <Col>
             <div className="text-xl font-semibold">View Distributors</div>
           </Col>
           <Col>
-            <Space size="middle">
-              <Button
-                type="primary"
-                icon={<Icons.PlusCircleOutlined />}
-                onClick={() => navigate("/distributor/add")}
-              >
-                Add Distributor
-              </Button>
-            </Space>
+            <Button
+              type="primary"
+              icon={<Icons.PlusCircleOutlined />}
+              onClick={() => navigate("/distributor/add")}
+            >
+              Add Distributor
+            </Button>
           </Col>
         </Row>
       </Card>
 
+      {/* Filters */}
       <Card className="!mb-4">
         <Row gutter={16} align="middle">
           <Col span={10}>
             <Search
               placeholder="Search distributor..."
               value={filter.search}
-              onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+              onChange={(e) =>
+                setFilter({ ...filter, search: e.target.value })
+              }
               onSearch={handleSearch}
               allowClear
-              onClear={handleClear}
               style={{ borderRadius: 6, height: 36 }}
             />
           </Col>
-          <Col span={14} className="!space-x-2" style={{ textAlign: "right" }}>
-            <Button type="default" size="middle" onClick={handleVisible}>
+          <Col span={14} style={{ textAlign: "right" }}>
+            <Button type="default" onClick={handleVisible}>
               {visiable ? "Hide Filters" : "View Filters"}
             </Button>
             <Button
               type="primary"
               icon={<Icons.FilterOutlined />}
-              size="middle"
               onClick={handleFilter}
             >
               Apply Filter
@@ -226,7 +248,7 @@ const ViewDistributor = () => {
         </Row>
 
         {visiable && (
-          <Row className="!border-t border-gray-100 mt-2 p-4" gutter={16}>
+          <Row className="mt-3" gutter={16}>
             <Col xs={24} sm={12} md={6}>
               <CustomInput
                 type="select"
@@ -243,8 +265,6 @@ const ViewDistributor = () => {
                 }
               />
             </Col>
-
-            {/* City Dropdown */}
             <Col xs={24} sm={12} md={6}>
               <CustomInput
                 type="select"
@@ -254,9 +274,9 @@ const ViewDistributor = () => {
                 options={
                   filter.state
                     ? statesAndCities[filter.state].map((city) => ({
-                      label: city,
-                      value: city,
-                    }))
+                        label: city,
+                        value: city,
+                      }))
                     : []
                 }
                 value={filter.city || undefined}
@@ -266,12 +286,9 @@ const ViewDistributor = () => {
             </Col>
           </Row>
         )}
+
         {hasActiveFilters && (
-          <Row
-            className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md"
-            gutter={8}
-            align="middle"
-          >
+          <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
             <Col flex="auto">
               <Space wrap>
                 {filter.search && (
@@ -279,36 +296,31 @@ const ViewDistributor = () => {
                     color="blue"
                     closable
                     onClose={() => {
-                      const updated = { ...filter, search: "" };
-                      setFilter(updated);
+                      setFilter({ ...filter, search: "" });
                       updateUrlParams({ search: "" });
                     }}
                   >
                     Search: {filter.search}
                   </Tag>
                 )}
-
                 {filter.state && (
                   <Tag
                     color="green"
                     closable
                     onClose={() => {
-                      const updated = { ...filter, state: "", city: "" };
-                      setFilter(updated);
+                      setFilter({ ...filter, state: "", city: "" });
                       updateUrlParams({ state: "", city: "" });
                     }}
                   >
                     State: {filter.state}
                   </Tag>
                 )}
-
                 {filter.city && (
                   <Tag
                     color="orange"
                     closable
                     onClose={() => {
-                      const updated = { ...filter, city: "" };
-                      setFilter(updated);
+                      setFilter({ ...filter, city: "" });
                       updateUrlParams({ city: "" });
                     }}
                   >
@@ -317,7 +329,6 @@ const ViewDistributor = () => {
                 )}
               </Space>
             </Col>
-
             <Col>
               <Button type="default" size="small" onClick={handleClear}>
                 Clear All
@@ -327,6 +338,7 @@ const ViewDistributor = () => {
         )}
       </Card>
 
+      {/* Tabs */}
       <Card>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab="Active" key="active">
@@ -343,6 +355,7 @@ const ViewDistributor = () => {
               }}
             />
           </TabPane>
+
           <TabPane tab="Inactive" key="inactive">
             <CustomTable
               tableId="inactiveDistributor"

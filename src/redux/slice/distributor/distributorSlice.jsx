@@ -106,7 +106,9 @@ export const restoreDistributor = createAsyncThunk(
   "dealer/restoreDistributor",
   async (distributorId) => {
     try {
-      const response = await distributorService.restoreDistributor(distributorId);
+      const response = await distributorService.restoreDistributor(
+        distributorId
+      );
       return response;
     } catch (error) {
       throw (
@@ -122,6 +124,8 @@ const distributorSlice = createSlice({
   name: "distributor",
   initialState: {
     distributor: [],
+    activeDistributors: [],
+    inactiveDistributors: [],
     distributorById: null,
     distributorDrop: [],
     pagination: {
@@ -163,7 +167,14 @@ const distributorSlice = createSlice({
       })
       .addCase(getDistributor.fulfilled, (state, action) => {
         state.loading = false;
-        state.distributor = action.payload.data;
+
+        const isActive = action.meta.arg.isActive; // ✅ detect current tab from request
+        if (isActive) {
+          state.activeDistributors = action.payload.data;
+        } else {
+          state.inactiveDistributors = action.payload.data;
+        }
+
         state.pagination = {
           page: action.payload.extras.page,
           total: action.payload.extras.total,
@@ -171,7 +182,7 @@ const distributorSlice = createSlice({
           totalPages: action.payload.extras.totalPages,
         };
       })
-      .addCase(getDistributor.rejected, (state, action) => {
+      .addCase(getDistributor.rejected, (state) => {
         state.loading = false;
       })
       .addCase(getDistributorById.pending, (state) => {
@@ -224,7 +235,7 @@ const distributorSlice = createSlice({
       .addCase(restoreDistributor.pending, (state) => {
         state.restoreLoading = true;
         state.error = null;
-      })    
+      })
       .addCase(restoreDistributor.fulfilled, (state, action) => {
         state.restoreLoading = false;
         state.message = action.payload.message;
@@ -235,7 +246,7 @@ const distributorSlice = createSlice({
         state.error = action.error.message;
         toast.error(state.error);
       });
-},
+  },
 });
 
 export const { resetDistributor } = distributorSlice.actions;
