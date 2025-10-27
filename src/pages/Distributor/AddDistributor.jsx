@@ -74,8 +74,8 @@ const AddDistributor = () => {
   };
 
   return (
-    <div className="!relative">
-      <Card className="!p-3 !m-4 !pb-10">
+<div className="!relative bg-[#f8f8f8]">
+      <div className="!p-3 !m-4 !pb-10">    
         {/* Header */}
         <Row align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -102,52 +102,66 @@ const AddDistributor = () => {
           <Form
             form={form}
             layout="vertical"
-            onFinish={onFinish}
+            onFinish={onFinish} 
             className="min-h-[70vh] w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <CustomInput
-                type="text"
-                name="company_name"
-                label="Company Name"
-                placeholder="Enter Company name"
-                rules={[
-                  { required: true, message: "Please enter Company name" },
-                ]}
-              />
-              <CustomInput
-                type="text"
-                name="name"
-                label="Name"
-                placeholder="Enter name"
-                rules={[{ required: true, message: "Please enter name" }]}
-              />
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%] ">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Basic Information</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CustomInput
+                  type="text"
+                  name="company_name"
+                  label="Company Name"
+                  placeholder="Enter Company name"
+                  rules={[{ required: true, message: "Please enter Company name" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="name"
+                  label="Name"
+                  placeholder="Enter name"
+                  rules={[{ required: true, message: "Please enter name" }]}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              <CustomInput
-                type="text"
-                name="email"
-                label="Email"
-                placeholder="Enter email"
-                rules={[{ required: true, message: "Please enter email" }]}
-              />
-              <CustomInput
-                type="text"
-                name="mobile_number"
-                label="Mobile Number"
-                placeholder="Enter Mobile Number"
-                maxLength={10}
-                rules={[
-                  { required: true, message: "Please enter Mobile Number" },
-                  {
-                    pattern: /^[0-9]{10}$/,
-                    message: "Mobile number must be digits",
-                  },
-                ]}
-              />
+            {/* ------------------ Contact Information ------------------ */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration- ml-0 mr-[30%]">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CustomInput
+                  type="text"
+                  name="email"
+                  label="Email"
+                  placeholder="Enter email"
+                  rules={[{ required: true, message: "Please enter email" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="mobile_number"
+                  label="Mobile Number"
+                  placeholder="Enter Mobile Number"
+                  maxLength={10}
+                  rules={[
+                    { required: true, message: "Please enter Mobile Number" },
+                    { pattern: /^[0-9]{10}$/, message: "Mobile number must be digits" },
+                  ]}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 mt-4 max-w-4xl mx-auto">
-              <div className="col-span-2">
+
+            {/* ------------------ Address Section ------------------ */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%] md-8">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Address</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                 <CustomInput
                   type="text"
                   name={["address", "line1"]}
@@ -156,8 +170,6 @@ const AddDistributor = () => {
                   className="w-full"
                   rules={[{ required: true, message: "Please enter Address" }]}
                 />
-              </div>
-              <div className="col-span-2">
                 <CustomInput
                   type="text"
                   name={["address", "line2"]}
@@ -165,35 +177,36 @@ const AddDistributor = () => {
                   className="w-full"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <CustomInput
-                type="select"
-                name={["address", "state"]}
-                label="State"
-                placeholder="Select State"
-                options={stateSelectionOptions?.map((state) => ({
-                  label: state.label,
-                  value: state.value,
-                }))}
-                showSearch
-                filterOption={(input, option) =>
-                  option.label.toLowerCase().includes(input.toLowerCase())
-                }
-                rules={[{ required: true, message: "Please select State" }]}
-              />
-              <CustomInput
-                type="text"
-                name={["address", "city"]}
-                label="City"
-                placeholder="Select City"
-                rules={[{ required: true, message: "Please select City" }]}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <CustomInput
+                  type="select"
+                  name={["address", "state"]}
+                  label="State"
+                  placeholder="Select State"
+                  options={stateSelectionOptions?.map((state) => ({
+                    label: state.label,
+                    value: state.value,
+                  }))}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
+                  rules={[{ required: true, message: "Please select State" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["address", "city"]}
+                  label="City"
+                  placeholder="Select City"
+                  rules={[{ required: true, message: "Please select City" }]}
+                />
+              </div>
             </div>
           </Form>
+
         )}
-      </Card>
+      </div>
 
       <div className="flex items-center gap-5 py-4 px-12 border-t border-l border-gray-200 w-full bg-white fixed bottom-0 shadow-[0_-1px_10px_rgba(0,0,0,0.08)] z-10">
         <Button type="primary" onClick={() => form.submit()}>

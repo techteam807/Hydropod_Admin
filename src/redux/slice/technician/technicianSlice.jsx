@@ -116,6 +116,8 @@ const technicianSlice = createSlice({
   name: "technician",
   initialState: {
     technician: [],
+    activeTechnician: [],
+    inactiveTechnician: [],
     singleTechnician: null,
     count: [],
     pagination: {
@@ -156,7 +158,14 @@ const technicianSlice = createSlice({
       })
       .addCase(getTechnician.fulfilled, (state, action) => {
         state.loading = false;
-        state.technician = action.payload.data;
+        const { isActive } = action.meta.arg;
+
+        if (isActive) {
+          state.activeTechnician = action.payload.data;
+        } else {
+          state.inactiveTechnician = action.payload.data;
+        }
+
         state.pagination = {
           page: action.payload.extras.page,
           total: action.payload.extras.total,

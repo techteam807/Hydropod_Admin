@@ -1,6 +1,10 @@
 import React, { useEffect } from "react";
-import { Card, Row, Col, Typography } from "antd";
-import { UserOutlined, TeamOutlined, ToolOutlined } from "@ant-design/icons";
+import { Row, Col, Typography, Spin } from "antd";
+import {
+  UserOutlined,
+  TeamOutlined,
+  ToolOutlined,
+} from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { getCount } from "../redux/slice/technician/technicianSlice";
 
@@ -8,10 +12,7 @@ const { Title, Text } = Typography;
 
 const Home = () => {
   const dispatch = useDispatch();
-  const { count } = useSelector((state) => state.technician);
-
-  console.log("count",count);
-  
+  const { count, loading } = useSelector((state) => state.technician); // make sure you have 'loading' in your slice
 
   useEffect(() => {
     dispatch(getCount());
@@ -20,20 +21,29 @@ const Home = () => {
   const stats = [
     {
       title: "Total Distributor",
-       value: count.distributor || 0, 
+      value: count?.distributor || 0,
       icon: <TeamOutlined style={{ fontSize: 30, color: "#1677ff" }} />,
     },
     {
       title: "Total Dealer",
-      value: count.dealer || 0,
+      value: count?.dealer || 0,
       icon: <UserOutlined style={{ fontSize: 30, color: "#722ed1" }} />,
     },
     {
       title: "Total Technician",
-       value: count.technician || 0,
+      value: count?.technician || 0,
       icon: <ToolOutlined style={{ fontSize: 30, color: "#52c41a" }} />,
     },
   ];
+
+  // loader when fetching data
+  if (loading || !count) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <Spin size="large" tip="Loading Dashboard..." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
@@ -44,10 +54,7 @@ const Home = () => {
       <Row gutter={[24, 24]}>
         {stats.map((item, index) => (
           <Col xs={24} sm={12} md={8} key={index}>
-            <Card
-              bordered
-              className="rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:border-blue-500"
-            >
+            <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-xl hover:border hover:border-blue-500">
               <div className="flex items-center justify-between">
                 <div>
                   <Text type="secondary" className="text-base">
@@ -59,7 +66,7 @@ const Home = () => {
                 </div>
                 <div>{item.icon}</div>
               </div>
-            </Card>
+            </div>
           </Col>
         ))}
       </Row>

@@ -113,6 +113,8 @@ const dealerSlice = createSlice({
   name: "dealer",
   initialState: {
     dealer: [],
+    activeDealer: [],
+    inactiveDealer: [],
     dealerById: null,
     dealerDrop: [],
     pagination: {
@@ -154,7 +156,14 @@ const dealerSlice = createSlice({
       })
       .addCase(getDealer.fulfilled, (state, action) => {
         state.loading = false;
-        state.dealer = action.payload.data;
+        const { isActive } = action.meta.arg; // ✅ detect which tab it came from
+
+        if (isActive) {
+          state.activeDealer = action.payload.data;
+        } else {
+          state.inactiveDealer = action.payload.data;
+        }
+
         state.pagination = {
           page: action.payload.extras.page,
           total: action.payload.extras.total,
@@ -162,7 +171,7 @@ const dealerSlice = createSlice({
           totalPages: action.payload.extras.totalPages,
         };
       })
-      .addCase(getDealer.rejected, (state, action) => {
+      .addCase(getDealer.rejected, (state) => {
         state.loading = false;
       })
       .addCase(getDealerById.pending, (state) => {
