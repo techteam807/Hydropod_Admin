@@ -160,6 +160,11 @@ const ViewDistributor = () => {
       render: (_, record) => (
         <Space>
           <Button
+        type="default"
+        icon={<Icons.EyeOutlined />}
+        onClick={() => navigate(`/distributor/view/${record._id}`)}
+      />
+          <Button
             type="primary"
             icon={<Icons.EditOutlined />}
             onClick={() => navigate(`/distributor/edit/${record._id}`)}
