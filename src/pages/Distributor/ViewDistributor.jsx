@@ -160,6 +160,11 @@ const ViewDistributor = () => {
       render: (_, record) => (
         <Space>
           <Button
+        type="default"
+        icon={<Icons.EyeOutlined />}
+        onClick={() => navigate(`/distributor/view/${record._id}`)}
+      />
+          <Button
             type="primary"
             icon={<Icons.EditOutlined />}
             onClick={() => navigate(`/distributor/edit/${record._id}`)}
@@ -221,7 +226,7 @@ const ViewDistributor = () => {
       {/* Filters */}
       <Card className="!mb-4">
         <Row gutter={16} align="middle">
-          <Col span={10}>
+          <Col xs={24} sm={12} md={10}>
             <Search
               placeholder="Search distributor..."
               value={filter.search}
@@ -230,10 +235,10 @@ const ViewDistributor = () => {
               }
               onSearch={handleSearch}
               allowClear
-              style={{ borderRadius: 6, height: 36 }}
             />
           </Col>
-          <Col span={14} style={{ textAlign: "right" }}>
+          <Col xs={24} sm={12} md={14} style={{ textAlign: "right" }}>
+            <Space>
             <Button type="default" onClick={handleVisible}>
               {visiable ? "Hide Filters" : "View Filters"}
             </Button>
@@ -244,6 +249,7 @@ const ViewDistributor = () => {
             >
               Apply Filter
             </Button>
+            </Space>
           </Col>
         </Row>
 

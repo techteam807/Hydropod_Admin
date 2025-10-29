@@ -37,8 +37,12 @@ export const getDistributor = createAsyncThunk(
 export const getDistributorById = createAsyncThunk(
   "distributor/getDistributorById",
   async (payload) => {
+    console.log("payload:",payload);
+    
     try {
       const response = await distributorService.getDistributorById(payload);
+      console.log(response);
+      
       return response;
     } catch (error) {
       throw (

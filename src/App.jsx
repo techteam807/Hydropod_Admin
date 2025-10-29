@@ -15,6 +15,9 @@ import ViewDealer from "./pages/Dealer/ViewDealer";
 import AddDealer from "./pages/Dealer/AddDealer";
 import ViewTechnician from "./pages/Technician/ViewTechnician";
 import AddTechnician from "./pages/Technician/AddTechnician";
+import ViewDistributorDetails from "./pages/Distributor/ViewDistributorDetails";
+import ViewDistributorDealer from "./pages/Dealer/ViewDealerDetails";
+import ViewDealerDetails from "./pages/Dealer/ViewDealerDetails";
 
 export default function App() {
   return (
@@ -46,10 +49,18 @@ export default function App() {
             path="/distributor/edit/:distributorId"
             element={<AddDistributor />}
           />
+          <Route
+            path="/distributor/view/:distributorId"
+            element={<ViewDistributorDetails />}
+          />
           {/* Dealer */}
           <Route path="/dealer" element={<ViewDealer />} />
           <Route path="/dealer/add" element={<AddDealer />} />
           <Route path="/dealer/edit/:dealerId" element={<AddDealer />} />
+          <Route
+            path="/dealer/view/:dealerId"
+            element={<ViewDealerDetails />}
+          />
           {/* Technician */}
           <Route path="/technician" element={<ViewTechnician />} />
           <Route path="/technician/add" element={<AddTechnician />} />
