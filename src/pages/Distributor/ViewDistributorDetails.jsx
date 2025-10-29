@@ -52,7 +52,7 @@ const ViewDistributorDetails = () => {
             />
             <div>
               <Title level={3} className="!m-0 text-gray-800 font-semibold">
-                Distributors, Dealers, and Users
+                Distributors, Dealers and Users
               </Title>
               <Text type="secondary">
                 Browse the hierarchy in-place. No separate detail page.
