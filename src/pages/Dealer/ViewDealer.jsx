@@ -151,6 +151,11 @@ const ViewDealer = () => {
       key: "action",
       render: (_, record) => (
         <Space>
+           <Button
+                  type="default"
+                  icon={<Icons.EyeOutlined />}
+                  onClick={() => navigate(`/dealer/view/${record._id}`)}
+                />
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
