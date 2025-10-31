@@ -37,8 +37,7 @@ const ViewDealerDetails = () => {
     );
   }
 
-  const { dealer, distributors, creditionalUser, users } = dealerById || {};
-  console.log(distributors);
+  const { dealer, distributor, creditionalUser, users } = dealerById || {};
   return (
     <div className="!relative bg-[#f8f8f8] min-h-screen">
       <div className="!p-3 !m-4 !pb-20">
@@ -52,7 +51,7 @@ const ViewDealerDetails = () => {
             />
             <div>
               <Title level={3} className="!m-0 text-gray-800 font-semibold">
-              Dealers, Distributorsn and Users
+                Dealers, Distributorsn and Users
               </Title>
               <Text type="secondary">
                 Browse the hierarchy in-place. No separate detail page.
@@ -71,7 +70,7 @@ const ViewDealerDetails = () => {
         </Row>
 
         {/* ───── Top Info Section ───── */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6 max-w-6xl">
+        <div className="bg-white !rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 w-full">
           <div className="flex flex-wrap items-center justify-between gap-4">
             {/* Left: Distributor Basic Info */}
             <div>
@@ -93,11 +92,11 @@ const ViewDealerDetails = () => {
 
             {/* Middle: Dealers and Users count */}
             <div className="text-gray-600 text-sm font-medium flex items-center gap-3 margin-right-4">
-              <span className="bg-gray-100 px-3 py-1 rounded-lg shadow-sm">
+              {/* <span className="bg-gray-100 px-3 py-1 rounded-lg shadow-sm">
                 Distributors: <b>{distributors?.length || 0}</b>
-              </span>
+              </span> */}
               <span className="bg-gray-100 px-3 py-1 rounded-lg shadow-sm">
-                Users: <b>{users?.length || 0}</b>
+                Technician Users: <b>{users?.length || 0}</b>
               </span>
             </div>
           </div>
@@ -109,9 +108,9 @@ const ViewDealerDetails = () => {
           {/* Distributor Details */}
           <Col xs={24} md={12}>
             <Card
-              title={<span className="font-semibold text-gray-800">Dealer Details</span>}
+              title={<span className="font-semibold text-gray-800 !ps-2">Dealer Details</span>}
               bordered={false}
-              className="rounded-xl shadow-sm border border-gray-100 h-full"
+              className="!rounded-2xl shadow-sm border border-gray-100 h-full"
               bodyStyle={{ minHeight: "320px", padding: "1.25rem" }}
             >
               <div className="space-y-2 text-[15px] leading-relaxed">
@@ -139,9 +138,9 @@ const ViewDealerDetails = () => {
           {/* Credential User */}
           <Col xs={24} md={12}>
             <Card
-              title={<span className="font-semibold text-gray-800">Credential User</span>}
+              title={<span className="font-semibold text-gray-800 !ps-2">Credential User</span>}
               bordered={false}
-              className="rounded-xl shadow-sm border border-gray-100 h-full"
+              className="!rounded-2xl shadow-sm border border-gray-100 h-full"
               bodyStyle={{ minHeight: "320px", padding: "1.25rem" }}
             >
               <div className="space-y-2 text-[15px] leading-relaxed">
@@ -152,9 +151,9 @@ const ViewDealerDetails = () => {
                   <Tag color="blue" className="ml-1">{creditionalUser?.userRole || "—"}</Tag>
                 </div>
                 <div className="flex items-center">
-                  <span className="font-medium w-28 text-gray-500">Active : </span>
-                  <Tag color={creditionalUser?.active ? "green" : "default"} className="ml-1">
-                    {creditionalUser?.active ? "true" : "false"}
+                  <span className="font-medium w-28 text-gray-500">Status : </span>
+                  <Tag color={creditionalUser?.isActive ? "green" : "default"} className="ml-1">
+                    {creditionalUser?.isActive ? "Active" : "InActive"}
                   </Tag>
                 </div>
                 <div className="flex items-center">
@@ -180,56 +179,41 @@ const ViewDealerDetails = () => {
           {/* Dealers Section */}
           <Col xs={24} md={12}>
             <Card
-              title={`Distributors (${distributors?.length || 0})`}
+              title={<span className="font-semibold text-gray-800 !ps-2">Distributor Details</span>}
               bordered={false}
-              className="rounded-xl shadow-sm border border-gray-100 h-full"
-              bodyStyle={{ minHeight: "300px", display: "flex", flexDirection: "column" }}
+              className="!rounded-2xl  border border-gray-100 h-full"
+              bodyStyle={{ minHeight: "300px", display: "flex", flexDirection: "column", padding: "1.25rem" }}
             >
-              {distributors ? (
-  <div className="flex flex-col gap-1">
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="font-semibold text-base">
-        {distributors?.name || "—"}
-      </span>
-      <Tag color={distributors?.isActive ? "green" : "default"}>
-        {distributors?.isActive ? "Active" : "Inactive"}
-      </Tag>
-    </div>
-
-    <span className="text-gray-600 text-sm">
-      {distributors?.email || "—"}
-    </span>
-    <span className="text-gray-600 text-sm">
-      {distributors?.mobile_number || "—"} • {distributors?.address?.city || "—"},{" "}
-      {distributors?.address?.state || "—"}
-    </span>
-
-    <div className="text-gray-600 text-sm break-words leading-snug">
-      <span className="font-medium text-gray-500">Address: </span>
-      {[
-        distributors?.address?.line1,
-        distributors?.address?.line2,
-        distributors?.address?.city,
-        distributors?.address?.state,
-      ]
-        .filter(Boolean)
-        .join(", ") || "—"}
-    </div>
-
-    <small className="text-gray-400 mt-1">
-      Created:{" "}
-      {distributors?.createdAt
-        ? new Date(distributors.createdAt).toLocaleString()
-        : "—"}{" "}
-      | Updated:{" "}
-      {distributors?.updatedAt
-        ? new Date(distributors.updatedAt).toLocaleString()
-        : "—"}
-    </small>
-  </div>
-) : (
-  <div className="text-center text-gray-400">No distributor found.</div>
-)}
+              {distributor ? (
+                <div className="space-y-2 text-[15px] leading-relaxed">
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Name : </span> <span>{distributor?.name || "—"}</span></div>
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Status : </span> <Tag color={distributor?.isActive ? "green" : "default"}>
+                    {distributor?.isActive ? "Active" : "Inactive"}
+                  </Tag>
+                  </div>
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Email : </span> <span>{distributor?.email || "—"}</span></div>
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Mobile : </span> <span>{distributor?.mobile_number || "—"}</span></div>
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Address : </span> <span>{[
+                    distributor?.address?.line1,
+                    distributor?.address?.line2,
+                    distributor?.address?.city,
+                    distributor?.address?.state,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "—"}</span>
+                  </div>
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Created : </span> <span>{distributor?.createdAt
+                    ? new Date(distributor.createdAt).toLocaleString()
+                    : "—"}</span>
+                  </div>
+                  <div className="flex"><span className="font-medium w-28 text-gray-500">Updated : </span> <span>{distributor?.updatedAt
+                    ? new Date(distributor.updatedAt).toLocaleString()
+                    : "—"}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-400">No distributor found.</div>
+              )}
 
             </Card>
           </Col>
@@ -237,10 +221,10 @@ const ViewDealerDetails = () => {
           {/* Users Section */}
           <Col xs={24} md={12}>
             <Card
-              title={`Users (${users?.length || 0})`}
-              bordered={false}
-              className="rounded-xl shadow-sm border border-gray-100 h-full"
-              bodyStyle={{ minHeight: "300px", display: "flex", flexDirection: "column" }}
+              title={<span className="font-semibold text-gray-800 !ps-2">{`Technician Users (${users?.length || 0})`}</span>}
+Credential User              bordered={false}
+              className="!rounded-2xl shadow-sm border border-gray-100 h-full"
+              bodyStyle={{ minHeight: "300px", display: "flex", flexDirection: "column", padding: "1.25rem" }}
             >
               <List
                 itemLayout="vertical"
@@ -249,20 +233,16 @@ const ViewDealerDetails = () => {
                 locale={{ emptyText: "No users available." }}
                 renderItem={(user) => (
                   <List.Item className="!border-b border-gray-100 last:border-none pb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Text strong>{user.name}</Text>
-                        <Tag color="blue">{user.userRole}</Tag>
-                        <Tag color={user.isActive ? "green" : "default"}>
-                          {user.isActive ? "Active" : "Inactive"}
-                        </Tag>
+                    <div className="space-y-2 text-[15px] leading-relaxed">
+                      <div className="flex"><span className="font-medium w-28 text-gray-500">Name : </span> <span>{user.name || "—"}</span></div>
+                      <div className="flex"><span className="font-medium w-28 text-gray-500">Role : </span> <Tag color="blue">{user.userRole}</Tag></div>
+                      <div className="flex"><span className="font-medium w-28 text-gray-500">Status : </span> <Tag color={user.isActive ? "green" : "default"}>
+                        {user.isActive ? "Active" : "Inactive"}
+                      </Tag>
                       </div>
-                      <Text type="secondary">{user.email}</Text>
-                      <br />
-                      <small className="text-gray-500">
-                        Created: {new Date(user.createdAt).toLocaleString()} | Updated:{" "}
-                        {new Date(user.updatedAt).toLocaleString()}
-                      </small>
+                      <div className="flex"><span className="font-medium w-28 text-gray-500">Mobile : </span> <span>{user.mobile_number || "—"}</span></div>
+                      <div className="flex"><span className="font-medium w-28 text-gray-500">Created : </span> <span>{new Date(user.createdAt).toLocaleString()}</span></div>
+                      <div className="flex"><span className="font-medium w-28 text-gray-500">Updated : </span> <span>{new Date(user.createdAt).toLocaleString()}</span></div>
                     </div>
                   </List.Item>
                 )}
