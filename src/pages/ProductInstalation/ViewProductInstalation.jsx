@@ -1,4 +1,3 @@
-// src/pages/ViewProductInstallation.jsx
 import React, { useState, useEffect } from "react";
 import {
     Card,
@@ -17,8 +16,6 @@ import {
 } from "antd";
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
-import CustomInput from "../../component/commonComponent/CustomInput";
-import { statesAndCities } from "../../constants/cities";
 import { useDispatch, useSelector } from "react-redux";
 import { approveProducts, getProducts } from "../../redux/slice/product/productSlice";
 import { useSearchParams } from "react-router-dom";
@@ -53,6 +50,7 @@ const ViewProductInstallation = () => {
 
     const hasActiveFilters = filter.search || filter.state || filter.city;
 
+    // Fetch products from API
     const fetchProduct = async () => {
         const isApproved = activeTab === "approve";
         const page = isApproved ? approvePage : unapprovePage;
@@ -76,33 +74,19 @@ const ViewProductInstallation = () => {
     // Helper: Normalize image URL
     const getImageUrl = (img) => {
         if (!img) return null;
-
         let url = img;
-
-        // Case 1: Object with url, path, or image field
-        if (typeof img === "object") {
-            url = img.url || img.path || img.image || img.src;
-        }
-
-        // Case 2: Relative URL
-        if (typeof url === "string" && url.startsWith("/")) {
-            url = `${API_BASE_URL}${url}`;
-        }
-
-        // Case 3: Full URL or base64
+        if (typeof img === "object") url = img.url || img.path || img.image || img.src;
+        if (typeof url === "string" && url.startsWith("/")) url = `${API_BASE_URL}${url}`;
         return url;
     };
 
     // Helper: Render images safely
     const renderImages = (images) => {
-        if (!images || !Array.isArray(images) || images.length === 0) {
+        if (!images || !Array.isArray(images) || images.length === 0)
             return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No images" />;
-        }
-
         return images.map((img, index) => {
             const url = getImageUrl(img);
             if (!url) return null;
-
             return (
                 <Image
                     key={index}
@@ -113,7 +97,7 @@ const ViewProductInstallation = () => {
                     onClick={() => setImagePreview(url)}
                     preview={false}
                     fallback="https://via.placeholder.com/120?text=No+Image"
-                    placeholder={<Spin />}
+                    // placeholder={<Spin />}
                     style={{ backgroundColor: "#f0f0f0" }}
                 />
             );
@@ -141,13 +125,12 @@ const ViewProductInstallation = () => {
             key: "action",
             render: (_, record) => (
                 <Space>
-                    {activeTab === "unapprove" &&
+                    {activeTab === "unapprove" && (
                         <Button
                             type="primary"
                             size="small"
                             icon={<Icons.CheckCircleOutlined />}
                             onClick={() => {
-                                console.log("Selected Record for Approval:", record); // Debug
                                 setSelectedItem(record);
                                 setApprovalNotes(record.approval_notes || "");
                                 setApproveModal(true);
@@ -155,13 +138,12 @@ const ViewProductInstallation = () => {
                         >
                             Approve
                         </Button>
-                    }
+                    )}
                     <Button
                         type="default"
                         size="small"
                         icon={<Icons.EyeOutlined />}
                         onClick={() => {
-                            console.log("Selected Record for View:", record); // Debug
                             setSelectedItem(record);
                             setViewModal(true);
                         }}
@@ -176,11 +158,16 @@ const ViewProductInstallation = () => {
     // Pagination handler
     const handleTableChange = (paginationConfig) => {
         const { current } = paginationConfig;
-        if (activeTab === "approve") {
-            setApprovePage(current);
-        } else {
-            setUnapprovePage(current);
-        }
+        if (activeTab === "approve") setApprovePage(current);
+        else setUnapprovePage(current);
+    };
+
+    // Clear all filters
+    const handleClearAll = () => {
+        setFilter({ search: "", state: "", city: "" });
+        setApprovePage(1);
+        setUnapprovePage(1);
+        fetchProduct();
     };
 
     return (
@@ -189,9 +176,7 @@ const ViewProductInstallation = () => {
             <Card className="!mb-4">
                 <Row align="middle" justify="space-between">
                     <Col>
-                        <div className="text-xl font-semibold">
-                            View Product Installations
-                        </div>
+                        <div className="text-xl font-semibold">View Product Installations</div>
                     </Col>
                 </Row>
             </Card>
@@ -203,7 +188,10 @@ const ViewProductInstallation = () => {
                         <Search
                             placeholder="Search product installation..."
                             value={filter.search}
-                            onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+                            onChange={(e) => {
+                                setFilter({ ...filter, search: e.target.value });
+                                if (e.target.value === "") handleClearAll();
+                            }}
                             onSearch={fetchProduct}
                             allowClear
                         />
@@ -213,11 +201,7 @@ const ViewProductInstallation = () => {
                             <Button type="default" onClick={() => setVisible(!visible)}>
                                 {visible ? "Hide Filters" : "View Filters"}
                             </Button>
-                            <Button
-                                type="primary"
-                                icon={<Icons.FilterOutlined />}
-                                onClick={fetchProduct}
-                            >
+                            <Button type="primary" icon={<Icons.FilterOutlined />} onClick={fetchProduct}>
                                 Apply Filter
                             </Button>
                         </Space>
@@ -229,40 +213,24 @@ const ViewProductInstallation = () => {
                         <Col flex="auto">
                             <Space wrap>
                                 {filter.search && (
-                                    <Tag
-                                        color="blue"
-                                        closable
-                                        onClose={() => setFilter({ ...filter, search: "" })}
-                                    >
+                                    <Tag color="blue" closable onClose={handleClearAll}>
                                         Search: {filter.search}
                                     </Tag>
                                 )}
                                 {filter.state && (
-                                    <Tag
-                                        color="green"
-                                        closable
-                                        onClose={() => setFilter({ ...filter, state: "", city: "" })}
-                                    >
+                                    <Tag color="green" closable onClose={handleClearAll}>
                                         State: {filter.state}
                                     </Tag>
                                 )}
                                 {filter.city && (
-                                    <Tag
-                                        color="orange"
-                                        closable
-                                        onClose={() => setFilter({ ...filter, city: "" })}
-                                    >
+                                    <Tag color="orange" closable onClose={handleClearAll}>
                                         City: {filter.city}
                                     </Tag>
                                 )}
                             </Space>
                         </Col>
                         <Col>
-                            <Button
-                                type="default"
-                                size="small"
-                                onClick={() => setFilter({ search: "", state: "", city: "" })}
-                            >
+                            <Button type="default" size="small" onClick={handleClearAll}>
                                 Clear All
                             </Button>
                         </Col>
@@ -288,8 +256,6 @@ const ViewProductInstallation = () => {
                             />
                         </Spin>
                     </TabPane>
-
-                    {/* Approved Tab (shown second) */}
                     <TabPane tab="Approved" key="approve">
                         <Spin spinning={loading}>
                             <CustomTable
@@ -308,7 +274,6 @@ const ViewProductInstallation = () => {
                 </Tabs>
             </Card>
 
-
             {/* Approve Modal */}
             <Modal
                 title="Approve Product Installation"
@@ -321,9 +286,7 @@ const ViewProductInstallation = () => {
                     <>
                         <div className="mb-4">
                             <p className="font-semibold mb-2">Images:</p>
-                            <div className="flex flex-wrap gap-3">
-                                {renderImages(selectedItem.images)}
-                            </div>
+                            <div className="flex flex-wrap gap-3">{renderImages(selectedItem.images)}</div>
                         </div>
 
                         <div>
@@ -363,13 +326,11 @@ const ViewProductInstallation = () => {
                             >
                                 Submit Approval
                             </Button>
-
                         </div>
                     </>
                 )}
             </Modal>
 
-            {/* View Image Modal */}
             {/* View Image Modal */}
             <Modal
                 title="View Product Installation"
@@ -380,12 +341,7 @@ const ViewProductInstallation = () => {
             >
                 {selectedItem && (
                     <div className="space-y-4">
-                        {/* Images */}
-                        <div className="flex flex-wrap gap-3">
-                            {renderImages(selectedItem.images)}
-                        </div>
-
-                        {/* Approval Notes */}
+                        <div className="flex flex-wrap gap-3">{renderImages(selectedItem.images)}</div>
                         <div>
                             <p className="font-semibold mb-1">Approval Notes:</p>
                             <div className="p-3 border rounded-md bg-gray-50">
@@ -396,25 +352,31 @@ const ViewProductInstallation = () => {
                 )}
             </Modal>
 
-
             {/* Full Image Preview */}
             <Modal
                 open={!!imagePreview}
                 footer={null}
                 onCancel={() => setImagePreview(null)}
                 centered
-                width={900}
-                closeIcon={<Icons.CloseOutlined />}
+                width={900} // Modal width
+                bodyStyle={{ padding: 0, display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "#000" }}
+                closable
+                closeIcon={<Icons.CloseOutlined style={{ color: "#fff" }} />}
             >
                 {imagePreview && (
-                    <Image
+                    <img
                         src={imagePreview}
                         alt="Full Preview"
-                        style={{ width: "100%", borderRadius: 8 }}
-                        preview={false}
+                        style={{
+                            maxWidth: "100%",
+                            maxHeight: "80vh", 
+                            objectFit: "contain", 
+                            borderRadius: 8,
+                        }}
                     />
                 )}
             </Modal>
+
         </div>
     );
 };
