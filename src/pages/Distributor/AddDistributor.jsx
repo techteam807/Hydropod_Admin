@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, Row, Col, Button, Form, Spin, Typography, message } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import CustomInput from "../../component/commonComponent/CustomInput";
@@ -10,6 +10,7 @@ import {
   updateDistributor,
 } from "../../redux/slice/distributor/distributorSlice";
 import { stateSelectionOptions } from "../../constants/cities";
+import { CopyOutlined, MinusCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 const AddDistributor = () => {
@@ -17,6 +18,7 @@ const AddDistributor = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { distributorId } = useParams();
+  const [showOtherAddress, setShowOtherAddress] = useState(false);
 
   const { distributorById, loading, postLoading } = useSelector(
     (state) => state.distributor
@@ -35,12 +37,30 @@ const AddDistributor = () => {
         name: distributorById?.distributor?.name || "",
         email: distributorById?.distributor?.email || "",
         mobile_number: distributorById?.distributor?.mobile_number || "",
-        address: {
-          line1: distributorById?.distributor?.address?.line1 || "",
-          line2: distributorById?.distributor?.address?.line2 || "",
-          city: distributorById?.distributor?.address?.city || "",
-          state: distributorById?.distributor?.address?.state || "",
+        office_address: {
+          line1: distributorById?.distributor?.office_address?.line1 || "",
+          line2: distributorById?.distributor?.office_address?.line2 || "",
+          city: distributorById?.distributor?.office_address?.city || "",
+          state: distributorById?.distributor?.office_address?.state || "",
+          pincode: distributorById?.distributor?.office_address?.pincode || "",
         },
+        wareHouse_address: {
+          line1: distributorById?.distributor?.wareHouse_address?.line1 || "",
+          line2: distributorById?.distributor?.wareHouse_address?.line2 || "",
+          city: distributorById?.distributor?.wareHouse_address?.city || "",
+          state: distributorById?.distributor?.wareHouse_address?.state || "",
+          pincode: distributorById?.distributor?.wareHouse_address?.pincode || "",
+        },
+        other_address: {
+          line1: distributorById?.distributor?.other_address?.line1 || "",
+          line2: distributorById?.distributor?.other_address?.line2 || "",
+          city: distributorById?.distributor?.other_address?.city || "",
+          state: distributorById?.distributor?.other_address?.state || "",
+          pincode: distributorById?.distributor?.other_address?.pincode || "",
+        },
+        gst_number: distributorById?.distributor?.gst_number,
+        additional_notes: distributorById?.distributor?.additional_notes,
+        terms_conditions: distributorById?.distributor?.terms_conditions,
       });
     }
   }, [distributorId, distributorById, form]);
@@ -49,14 +69,34 @@ const AddDistributor = () => {
     const payload = {
       company_name: values.company_name || "",
       name: values.name || "",
+      gst_number: values?.gst_number,
       email: values.email || "",
       mobile_number: values.mobile_number || "",
-      address: {
-        line1: values.address?.line1,
-        line2: values.address?.line2,
-        city: values.address?.city,
-        state: values.address?.state,
+      office_address: {
+        line1: values.office_address?.line1,
+        line2: values.office_address?.line2,
+        city: values.office_address?.city,
+        state: values.office_address?.state,
+        pincode: values.office_address?.pincode,
       },
+      wareHouse_address: {
+        line1: values.wareHouse_address?.line1,
+        line2: values.wareHouse_address?.line2,
+        city: values.wareHouse_address?.city,
+        state: values.wareHouse_address?.state,
+        pincode: values.wareHouse_address?.pincode,
+      },
+      ...(showOtherAddress && {
+        other_address: {
+          line1: values.other_address?.line1,
+          line2: values.other_address?.line2,
+          city: values.other_address?.city,
+          state: values.other_address?.state,
+          pincode: values.other_address?.pincode,
+        },
+      }),
+      additional_notes: values?.additional_notes,
+      terms_conditions: values?.terms_conditions,
     };
     try {
       if (distributorId) {
@@ -73,9 +113,26 @@ const AddDistributor = () => {
     }
   };
 
+  const copyOfficeToWarehouse = () => {
+    const officeAddress = form.getFieldValue("office_address");
+
+    if (officeAddress) {
+      form.setFieldsValue({
+        wareHouse_address: {
+          line1: officeAddress.line1 || "",
+          line2: officeAddress.line2 || "",
+          city: officeAddress.city || "",
+          state: officeAddress.state || "",
+          pincode: officeAddress.pincode || "",
+        },
+      });
+    }
+  };
+
+
   return (
-<div className="!relative bg-[#f8f8f8]">
-      <div className="!p-3 !m-4 !pb-10">    
+    <div className="!relative bg-[#f8f8f8]">
+      <div className="!p-3 !m-4 !pb-10">
         {/* Header */}
         <Row align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -102,7 +159,7 @@ const AddDistributor = () => {
           <Form
             form={form}
             layout="vertical"
-            onFinish={onFinish} 
+            onFinish={onFinish}
             className="min-h-[70vh] w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
           >
             <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%] ">
@@ -124,6 +181,13 @@ const AddDistributor = () => {
                   label="Name"
                   placeholder="Enter name"
                   rules={[{ required: true, message: "Please enter name" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="gst_number"
+                  label="GST Number"
+                  placeholder="Enter GST Number"
+                  rules={[{ required: true, message: "Please enter GST Number" }]}
                 />
               </div>
             </div>
@@ -158,13 +222,13 @@ const AddDistributor = () => {
             {/* ------------------ Address Section ------------------ */}
             <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%] md-8">
               <div className="flex items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Address</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Office Address</h3>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
                 <CustomInput
                   type="text"
-                  name={["address", "line1"]}
+                  name={["office_address", "line1"]}
                   label="Address"
                   placeholder="Street 1"
                   className="w-full"
@@ -172,16 +236,16 @@ const AddDistributor = () => {
                 />
                 <CustomInput
                   type="text"
-                  name={["address", "line2"]}
+                  name={["office_address", "line2"]}
                   placeholder="Street 2"
                   className="w-full"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                 <CustomInput
                   type="select"
-                  name={["address", "state"]}
+                  name={["office_address", "state"]}
                   label="State"
                   placeholder="Select State"
                   options={stateSelectionOptions?.map((state) => ({
@@ -196,13 +260,181 @@ const AddDistributor = () => {
                 />
                 <CustomInput
                   type="text"
-                  name={["address", "city"]}
+                  name={["office_address", "city"]}
                   label="City"
-                  placeholder="Select City"
-                  rules={[{ required: true, message: "Please select City" }]}
+                  placeholder="Enter City Name"
+                  rules={[{ required: true, message: "Please Enter City" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["office_address", "pincode"]}
+                  label="Pincode"
+                  placeholder="Enter Pincode"
+                  rules={[{ required: true, message: "Please Enter Pincode" }]}
                 />
               </div>
             </div>
+
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+              <div className="flex items-center mb-4 w-full justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">Warehouse Address</h3>
+
+                <Button
+                  type="link"
+                  icon={<CopyOutlined className="text-[12px]" />}
+                  onClick={copyOfficeToWarehouse}
+                >
+                  Copy Office Address
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <CustomInput
+                  type="text"
+                  name={["wareHouse_address", "line1"]}
+                  label="Address"
+                  placeholder="Street 1"
+                  className="w-full"
+                  rules={[{ required: true, message: "Please enter Address" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["wareHouse_address", "line2"]}
+                  placeholder="Street 2"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <CustomInput
+                  type="select"
+                  name={["wareHouse_address", "state"]}
+                  label="State"
+                  placeholder="Select State"
+                  options={stateSelectionOptions?.map((state) => ({
+                    label: state.label,
+                    value: state.value,
+                  }))}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
+                  rules={[{ required: true, message: "Please select State" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["wareHouse_address", "city"]}
+                  label="City"
+                  placeholder="Enter City Name"
+                  rules={[{ required: true, message: "Please Enter City" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["wareHouse_address", "pincode"]}
+                  label="Pincode"
+                  placeholder="Enter Pincode"
+                  rules={[{ required: true, message: "Please Enter Pincode" }]}
+                />
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <Button
+                  type="link"
+                  icon={
+                    showOtherAddress ? (
+                      <MinusCircleOutlined className="text-[12px]" />
+                    ) : (
+                      <PlusCircleOutlined className="text-[12px]" />
+                    )
+                  }
+                  onClick={() => setShowOtherAddress(!showOtherAddress)}
+                >
+                  {showOtherAddress ? "Remove Other Address" : "Add Other Address"}
+                </Button>
+              </div>
+
+            </div>
+
+            {showOtherAddress && (
+              <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+                <div className="flex items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Other Address
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <CustomInput
+                    type="text"
+                    name={["other_address", "line1"]}
+                    label="Address"
+                    placeholder="Street 1"
+                    className="w-full"
+                  />
+                  <CustomInput
+                    type="text"
+                    name={["other_address", "line2"]}
+                    placeholder="Street 2"
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                  <CustomInput
+                    type="select"
+                    name={["other_address", "state"]}
+                    label="State"
+                    placeholder="Select State"
+                    options={stateSelectionOptions?.map((state) => ({
+                      label: state.label,
+                      value: state.value,
+                    }))}
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                  <CustomInput
+                    type="text"
+                    name={["other_address", "city"]}
+                    label="City"
+                    placeholder="Enter City Name"
+                  />
+                  <CustomInput
+                    type="text"
+                    name={["other_address", "pincode"]}
+                    label="Pincode"
+                    placeholder="Enter Pincode"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Other Details</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CustomInput
+                  type="textarea"
+                  name="terms_conditions"
+                  label="Terms & Conditions"
+                  placeholder="Enter Terms & Conditions"
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                />
+
+                <CustomInput
+                  type="textarea"
+                  name="additional_notes"
+                  label="Additional Notes"
+                  placeholder="Enter any additional notes"
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                />
+              </div>
+            </div>
+
+
           </Form>
 
         )}

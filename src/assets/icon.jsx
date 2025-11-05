@@ -80,6 +80,8 @@ import {
   ContainerOutlined,
   ShoppingCartOutlined,
   UsergroupAddOutlined,
+  ProductOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 
 const Icons = {
@@ -164,6 +166,8 @@ const Icons = {
   ContainerOutlined,
   ShoppingCartOutlined,
   UsergroupAddOutlined,
+  ProductOutlined,
+  CheckCircleOutlined,
 };
 
 export default Icons;

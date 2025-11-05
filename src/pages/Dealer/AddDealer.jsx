@@ -1,4 +1,5 @@
-import { Button, Card, Col, Form, message, Row, Spin, Typography } from "antd";
+import { useEffect } from "react";
+import { Button, Form, Row, Col, Spin, Typography, message } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -6,7 +7,6 @@ import {
   getDealerById,
   updateDealer,
 } from "../../redux/slice/dealer/dealerSlice";
-import { useEffect } from "react";
 import Icons from "../../assets/icon";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
@@ -21,7 +21,6 @@ function AddDealer() {
   const { dealerId } = useParams();
 
   const { distributorDrop } = useSelector((state) => state.distributor);
-
   const { dealerById, loading, postLoading } = useSelector(
     (state) => state.dealer
   );
@@ -49,8 +48,11 @@ function AddDealer() {
           line2: dealerById?.dealer?.address?.line2 || "",
           city: dealerById?.dealer?.address?.city || "",
           state: dealerById?.dealer?.address?.state || "",
+          pincode: dealerById?.dealer?.address?.pincode || "",
         },
-        country: dealerById?.dealer?.country || "",
+        gst_number: dealerById?.dealer?.gst_number,
+        additional_notes: dealerById?.dealer?.additional_notes,
+        terms_conditions: dealerById?.dealer?.terms_conditions,
       });
     }
   }, [dealerId, dealerById, form]);
@@ -60,6 +62,7 @@ function AddDealer() {
       distributorId: values.distributorId,
       company_name: values.company_name,
       name: values.name,
+      gst_number: values?.gst_number,
       email: values.email,
       mobile_number: values.mobile_number,
       address: {
@@ -67,8 +70,10 @@ function AddDealer() {
         line2: values.address?.line2,
         city: values.address?.city,
         state: values.address?.state,
+        pincode: values.address?.pincode,
       },
-      country: values.country,
+      additional_notes: values?.additional_notes,
+      terms_conditions: values?.terms_conditions,
     };
 
     try {
@@ -85,160 +90,198 @@ function AddDealer() {
   };
 
   return (
- <div className="!relative bg-[#f8f8f8]">
+    <div className="!relative bg-[#f8f8f8]">
       <div className="!p-3 !m-4 !pb-10">
-    
-    {/* Header */}
-    <Row align="middle" className="mb-8">
-      <Col>
-        <Button
-          type="text"
-          icon={<Icons.ArrowLeftOutlined />}
-          onClick={() => navigate(-1)}
-          className="!mr-3"
-        />
-      </Col>
-      <Col>
-        <Title level={3} className="!m-0 text-gray-800 font-semibold">
-          {dealerId ? "Edit Dealer" : "Add Dealer"}
-        </Title>
-      </Col>
-    </Row>
+        {/* Header */}
+        <Row align="middle" style={{ marginBottom: 24 }}>
+          <Col>
+            <Button
+              type="text"
+              icon={<Icons.ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              style={{ marginRight: 8 }}
+            />
+          </Col>
+          <Col>
+            <Title level={3} style={{ margin: 0 }}>
+              {dealerId ? "Edit Dealer" : "Add Dealer"}
+            </Title>
+          </Col>
+        </Row>
 
-    {/* Loader */}
-    {loading && dealerId ? (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Spin tip="Loading..." />
+        {/* Loader */}
+        {loading && dealerId ? (
+          <div className="flex items-center justify-center h-[60vh]">
+            <Spin tip="Loading..." />
+          </div>
+        ) : (
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            className="min-h-[70vh] w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            {/* Dealer Information */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Dealer Information
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <CustomInput
+                  type="select"
+                  name="distributorId"
+                  label="Distributor Name"
+                  placeholder="Select Distributor name"
+                  options={distributorDrop.map((d) => ({
+                    label: d.distributorId || d.name,
+                    value: d._id,
+                  }))}
+                  rules={[
+                    { required: true, message: "Please select Distributor" },
+                  ]}
+                  disabled={dealerId}
+                />
+                <CustomInput
+                  type="text"
+                  name="company_name"
+                  label="Company Name"
+                  placeholder="Enter Company Name"
+                  rules={[{ required: true, message: "Please enter Company Name" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="name"
+                  label="Name"
+                  placeholder="Enter Name"
+                  rules={[{ required: true, message: "Please enter Name" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="gst_number"
+                  label="GST Number"
+                  placeholder="Enter GST Number"
+                  rules={[{ required: true, message: "Please enter GST Number" }]}
+                />
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Contact Information
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CustomInput
+                  type="text"
+                  name="email"
+                  label="Email"
+                  placeholder="Enter Email"
+                  rules={[{ required: true, message: "Please enter Email" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="mobile_number"
+                  label="Mobile Number"
+                  placeholder="Enter Mobile Number"
+                  maxLength={10}
+                  rules={[
+                    { required: true, message: "Please enter Mobile Number" },
+                    { pattern: /^[0-9]{10}$/, message: "Mobile number must be digits" },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* Address Section */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 mt-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Address</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <CustomInput
+                  type="text"
+                  name={["address", "line1"]}
+                  label="Address Line 1"
+                  placeholder="Street 1"
+                  rules={[{ required: true, message: "Please enter Address Line 1" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["address", "line2"]}
+                  placeholder="Street 2 (optional)"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <CustomInput
+                  type="select"
+                  name={["address", "state"]}
+                  label="State"
+                  placeholder="Select State"
+                  options={stateSelectionOptions?.map((state) => ({
+                    label: state.label,
+                    value: state.value,
+                  }))}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
+                  rules={[{ required: true, message: "Please select State" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["address", "city"]}
+                  label="City"
+                  placeholder="Enter City"
+                  rules={[{ required: true, message: "Please enter City" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name={["address", "pincode"]}
+                  label="Pincode"
+                  placeholder="Enter Pincode"
+                  rules={[{ required: true, message: "Please enter Pincode" }]}
+                />
+              </div>
+            </div>
+
+            {/* Other Details */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-md p-6 mb-6 border border-gray-200 hover:shadow-lg transition-all duration-300 ml-0 mr-[30%]">
+              <div className="flex items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Other Details
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CustomInput
+                  type="textarea"
+                  name="terms_conditions"
+                  label="Terms & Conditions"
+                  placeholder="Enter Terms & Conditions"
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                />
+
+                <CustomInput
+                  type="textarea"
+                  name="additional_notes"
+                  label="Additional Notes"
+                  placeholder="Enter any additional notes"
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                />
+              </div>
+            </div>
+          </Form>
+        )}
       </div>
-    ) : (
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        className="space-y-10"
-      >
-        {/* ───── Dealer Information Section ───── */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-md transition-all duration-300 ml-0 mr-[30%]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Dealer Information
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <CustomInput
-              type="select"
-              name="distributorId"
-              label="Distributor Name"
-              placeholder="Select Distributor name"
-              options={distributorDrop.map((d) => ({
-                label: d.distributorId || d.name,
-                value: d._id,
-              }))}
-              rules={[
-                { required: true, message: "Please select Distributor" },
-              ]}
-              disabled={dealerId}
-            />
-            <CustomInput
-              type="text"
-              name="company_name"
-              label="Company Name"
-              placeholder="Enter Company name"
-              rules={[
-                { required: true, message: "Please enter Company name" },
-              ]}
-            />
-            <CustomInput
-              type="text"
-              name="name"
-              label="Name"
-              placeholder="Enter name"
-              rules={[{ required: true, message: "Please enter name" }]}
-            />
-          </div>
-        </div>
 
-        {/* ───── Contact Information Section ───── */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6 mt-6 hover:shadow-md transition-all duration-300 ml-0 mr-[30%]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Contact Information
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <CustomInput
-              type="text"
-              name="mobile_number"
-              label="Mobile Number"
-              placeholder="Enter Mobile Number"
-              maxLength={10}
-              rules={[
-                { required: true, message: "Please enter Mobile Number" },
-                {
-                  pattern: /^[0-9]{10}$/,
-                  message: "Mobile number must be 10 digits",
-                },
-              ]}
-            />
-            <CustomInput
-              type="text"
-              name="email"
-              label="Email"
-              placeholder="Enter email"
-              rules={[{ required: true, message: "Please enter email" }]}
-            />
-          </div>
-        </div>
-
-        {/* ───── Address Section ───── */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-md transition-all duration-300 ml-0 mr-[30%] mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Address</h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <CustomInput
-              type="text"
-              name={["address", "line1"]}
-              label="Address Line 1"
-              placeholder="Street 1"
-              rules={[
-                { required: true, message: "Please enter Address Line 1" },
-              ]}
-            />
-            <CustomInput
-              type="text"
-              name={["address", "line2"]}
-              label="Address Line 2"
-              placeholder="Street 2 (optional)"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-            <CustomInput
-              type="select"
-              name={["address", "state"]}
-              label="State"
-              placeholder="Select State"
-              options={stateSelectionOptions?.map((state) => ({
-                label: state.label,
-                value: state.value,
-              }))}
-              showSearch
-              filterOption={(input, option) =>
-                option.label.toLowerCase().includes(input.toLowerCase())
-              }
-              rules={[{ required: true, message: "Please select State" }]}
-            />
-            <CustomInput
-              type="text"
-              name={["address", "city"]}
-              label="City"
-              placeholder="Enter City"
-              rules={[{ required: true, message: "Please enter City" }]}
-            />
-          </div>
-        </div>
-      </Form>
-    )}
-  </div>
-
-
-      {/* Bottom Action Bar */}
+      {/* Bottom Action Buttons */}
       <div className="flex items-center gap-5 py-4 px-12 border-t border-l border-gray-200 w-full bg-white fixed bottom-0 shadow-[0_-1px_10px_rgba(0,0,0,0.08)] z-10">
         <Button type="primary" onClick={() => form.submit()}>
           {postLoading ? (

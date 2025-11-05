@@ -18,6 +18,7 @@ import AddTechnician from "./pages/Technician/AddTechnician";
 import ViewDistributorDetails from "./pages/Distributor/ViewDistributorDetails";
 import ViewDistributorDealer from "./pages/Dealer/ViewDealerDetails";
 import ViewDealerDetails from "./pages/Dealer/ViewDealerDetails";
+// import ViewProductInstallation from "./pages/ProductInstalation/ViewProductInstalation";
 
 export default function App() {
   return (
@@ -64,10 +65,9 @@ export default function App() {
           {/* Technician */}
           <Route path="/technician" element={<ViewTechnician />} />
           <Route path="/technician/add" element={<AddTechnician />} />
-          <Route
-            path="/technician/edit/:technicianId"
-            element={<AddTechnician />}
-          />
+          <Route path="/technician/edit/:technicianId" element={<AddTechnician />} />
+    
+          {/* <Route path="/product" element={<ViewProductInstallation />} /> */}
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

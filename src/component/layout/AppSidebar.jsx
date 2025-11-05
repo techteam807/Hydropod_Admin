@@ -53,6 +53,12 @@ const AppSidebar = ({ collapsed, setCollapsed }) => {
       label: "Technician",
       path: "/technician",
     },
+    //  {
+    //   key: "5",
+    //   icon: <Icons.ProductOutlined />,
+    //   label: "Product Installation",
+    //   path: "/product",
+    // },
   ];
 
   const handleMenuClick = ({ key }) => {
