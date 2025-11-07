@@ -119,7 +119,7 @@ const Home = () => {
           <div className="h-8 w-[1px] bg-gray-300"></div>
           <div>
             <span className="block font-semibold text-gray-700 text-base">
-              {new Date().toLocaleDateString()}
+              {new Date().toLocaleDateString("en-GB")}
             </span>
             Current Date
           </div>
