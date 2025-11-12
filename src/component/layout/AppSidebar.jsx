@@ -60,6 +60,7 @@ const AppSidebar = ({ collapsed, setCollapsed }) => {
       path: "/product",
     },
   ];
+  
 
   const handleMenuClick = ({ key }) => {
     const item = items.find((i) => i.key === key);
