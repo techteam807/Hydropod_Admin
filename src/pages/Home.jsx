@@ -126,9 +126,9 @@ const Home = () => {
         </div>
       </div>
 
-      <footer className="text-center mt-16 text-gray-400 text-xs">
+      {/* <footer className="text-center mt-16 text-gray-400 text-xs">
         © {new Date().getFullYear()} Technician Dashboard | Designed with 💡 by Your Team
-      </footer>
+      </footer> */}
     </div>
   );
 };
