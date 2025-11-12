@@ -1,4 +1,3 @@
-// src/pages/ViewProductInstallation.jsx
 import React, { useState, useEffect } from "react";
 import {
     Card,
@@ -17,8 +16,6 @@ import {
 } from "antd";
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
-import CustomInput from "../../component/commonComponent/CustomInput";
-import { statesAndCities } from "../../constants/cities";
 import { useDispatch, useSelector } from "react-redux";
 import { approveProducts, getProducts } from "../../redux/slice/product/productSlice";
 import { useSearchParams } from "react-router-dom";
@@ -28,84 +25,76 @@ const { TabPane } = Tabs;
 
 const ViewProductInstallation = () => {
     const dispatch = useDispatch();
-    const [searchParams] = useSearchParams();
-
-    const { approveProduct, unapproveProduct, loading, approveLoading, pagination } = useSelector(
-        (state) => state.product
-    );
-
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { approveProduct, unapproveProduct, loading, approveLoading, pagination } = useSelector((state) => state.product);
     const [visible, setVisible] = useState(false);
     const [activeTab, setActiveTab] = useState("unapprove");
     const [approvePage, setApprovePage] = useState(1);
     const [unapprovePage, setUnapprovePage] = useState(1);
-
-    const [filter, setFilter] = useState({
-        search: searchParams.get("search") || "",
-        state: "",
-        city: "",
-    });
-
     const [approveModal, setApproveModal] = useState(false);
     const [viewModal, setViewModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [approvalNotes, setApprovalNotes] = useState("");
 
-    const hasActiveFilters = filter.search || filter.state || filter.city;
+    const [filter, setFilter] = useState({
+        search: searchParams.get("search") || "",
+        limit: parseInt(searchParams.get("limit")) || 10,
+    });
 
-    const fetchProduct = async () => {
+    const hasActiveFilters = !!filter.search;
+
+    const setUrl = (updates) => {
+        const params = new URLSearchParams(searchParams);
+        Object.entries(updates).forEach(([k, v]) => {
+            if (v) params.set(k, v);
+            else params.delete(k);
+        });
+        setSearchParams(params);
+    };
+
+    const handleSearch = async (searchValue = filter.search) => {
         const isApproved = activeTab === "approve";
         const page = isApproved ? approvePage : unapprovePage;
-        const limit = pagination?.limit || 10;
-
-        const payload = {
-            search: filter.search,
-            page,
-            limit,
-            isApproved,
-        };
-
+        const limit = filter.limit;
+        const payload = { search: searchValue, page, limit, isApproved };
         await dispatch(getProducts(payload));
     };
 
+    const fetchProduct = () => handleSearch(filter.search);
+
     useEffect(() => {
         fetchProduct();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, approvePage, unapprovePage]);
+    }, [activeTab, approvePage, unapprovePage, filter.limit]);
 
-    // Helper: Normalize image URL
+    useEffect(() => {
+        const urlSearch = searchParams.get("search") || "";
+        const urlLimit = parseInt(searchParams.get("limit")) || 10;
+        const urlPage = parseInt(searchParams.get("page")) || 1;
+        setFilter((prev) => ({ ...prev, search: urlSearch, limit: urlLimit }));
+        const isApprove = activeTab === "approve";
+        if (isApprove) setApprovePage(urlPage);
+        else setUnapprovePage(urlPage);
+    }, [searchParams, activeTab]);
+
     const getImageUrl = (img) => {
         if (!img) return null;
-
         let url = img;
-
-        // Case 1: Object with url, path, or image field
-        if (typeof img === "object") {
-            url = img.url || img.path || img.image || img.src;
-        }
-
-        // Case 2: Relative URL
-        if (typeof url === "string" && url.startsWith("/")) {
-            url = `${API_BASE_URL}${url}`;
-        }
-
-        // Case 3: Full URL or base64
+        if (typeof img === "object") url = img.url || img.path || img.image || img.src;
+        if (typeof url === "string" && url.startsWith("/"))
+            url = `${process.env.REACT_APP_API_BASE_URL || ""}${url}`;
         return url;
     };
 
-    // Helper: Render images safely
     const renderImages = (images) => {
-        if (!images || !Array.isArray(images) || images.length === 0) {
+        if (!images || !Array.isArray(images) || images.length === 0)
             return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No images" />;
-        }
-
-        return images.map((img, index) => {
+        return images.map((img, i) => {
             const url = getImageUrl(img);
             if (!url) return null;
-
             return (
                 <Image
-                    key={index}
+                    key={i}
                     width={120}
                     height={120}
                     src={url}
@@ -113,14 +102,12 @@ const ViewProductInstallation = () => {
                     onClick={() => setImagePreview(url)}
                     preview={false}
                     fallback="https://via.placeholder.com/120?text=No+Image"
-                    placeholder={<Spin />}
                     style={{ backgroundColor: "#f0f0f0" }}
                 />
             );
         });
     };
 
-    // Table Columns
     const columns = [
         { title: "Product Code", dataIndex: "productCode", key: "productCode" },
         { title: "Customer Name", dataIndex: "name", key: "name" },
@@ -128,83 +115,97 @@ const ViewProductInstallation = () => {
             title: "Installation Date",
             dataIndex: "installation_date",
             key: "installation_date",
-            render: (date) => (date ? new Date(date).toLocaleString() : "-"),
+            render: (d) => (d ? new Date(d).toLocaleDateString() : "-"),
         },
         {
             title: "Installation By",
             dataIndex: "technicianId",
             key: "technicianId",
-            render: (tech) => (tech ? tech.name : "-"),
+            render: (t) => (t ? t.name : "-"),
         },
         {
             title: "Action",
             key: "action",
-            render: (_, record) => (
+            render: (_, r) => (
                 <Space>
-                    {activeTab === "unapprove" &&
+                    {activeTab === "unapprove" && (
                         <Button
                             type="primary"
                             size="small"
                             icon={<Icons.CheckCircleOutlined />}
                             onClick={() => {
-                                console.log("Selected Record for Approval:", record); // Debug
-                                setSelectedItem(record);
-                                setApprovalNotes(record.approval_notes || "");
+                                setSelectedItem(r);
+                                setApprovalNotes(r.approval_notes || "");
                                 setApproveModal(true);
                             }}
                         >
                             Approve
                         </Button>
-                    }
+                    )}
                     <Button
                         type="default"
                         size="small"
                         icon={<Icons.EyeOutlined />}
                         onClick={() => {
-                            console.log("Selected Record for View:", record); // Debug
-                            setSelectedItem(record);
+                            setSelectedItem(r);
                             setViewModal(true);
                         }}
                     >
-                        View Image
+                        View
                     </Button>
                 </Space>
             ),
         },
     ];
 
-    // Pagination handler
-    const handleTableChange = (paginationConfig) => {
-        const { current } = paginationConfig;
-        if (activeTab === "approve") {
-            setApprovePage(current);
-        } else {
-            setUnapprovePage(current);
-        }
+    const handleTableChange = (p) => {
+        const { current, pageSize } = p;
+        const isApprove = activeTab === "approve";
+        if (isApprove) setApprovePage(current);
+        else setUnapprovePage(current);
+        setUrl({
+            page: current,
+            limit: pageSize,
+            search: filter.search,
+        });
+    };
+
+    const handleClearAll = () => {
+        setFilter({ search: "", limit: 10 });
+        setApprovePage(1);
+        setUnapprovePage(1);
+        setUrl({ page: 1, limit: 10, search: "" });
+        handleSearch("");
     };
 
     return (
         <div className="m-4">
-            {/* Header */}
             <Card className="!mb-4">
                 <Row align="middle" justify="space-between">
                     <Col>
-                        <div className="text-xl font-semibold">
-                            View Product Installations
-                        </div>
+                        <div className="text-xl font-semibold">View Product Installations</div>
                     </Col>
                 </Row>
             </Card>
 
-            {/* Filters */}
             <Card className="!mb-4">
                 <Row gutter={16} align="middle">
                     <Col xs={24} sm={12} md={10}>
                         <Search
                             placeholder="Search product installation..."
                             value={filter.search}
-                            onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-                            onSearch={fetchProduct}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                setFilter((prev) => ({ ...prev, search: v }));
+                                if (!v) {
+                                    setUrl({ page: 1, search: "" });
+                                    handleSearch("");
+                                }
+                            }}
+                            onSearch={(v) => {
+                                setUrl({ page: 1, search: v });
+                                handleSearch(v);
+                            }}
                             allowClear
                         />
                     </Col>
@@ -216,7 +217,10 @@ const ViewProductInstallation = () => {
                             <Button
                                 type="primary"
                                 icon={<Icons.FilterOutlined />}
-                                onClick={fetchProduct}
+                                onClick={() => {
+                                    setUrl({ page: 1, limit: filter.limit, search: filter.search });
+                                    handleSearch();
+                                }}
                             >
                                 Apply Filter
                             </Button>
@@ -232,37 +236,19 @@ const ViewProductInstallation = () => {
                                     <Tag
                                         color="blue"
                                         closable
-                                        onClose={() => setFilter({ ...filter, search: "" })}
+                                        onClose={() => {
+                                            setFilter((prev) => ({ ...prev, search: "" }));
+                                            setUrl({ page: 1, search: "" });
+                                            handleSearch("");
+                                        }}
                                     >
                                         Search: {filter.search}
-                                    </Tag>
-                                )}
-                                {filter.state && (
-                                    <Tag
-                                        color="green"
-                                        closable
-                                        onClose={() => setFilter({ ...filter, state: "", city: "" })}
-                                    >
-                                        State: {filter.state}
-                                    </Tag>
-                                )}
-                                {filter.city && (
-                                    <Tag
-                                        color="orange"
-                                        closable
-                                        onClose={() => setFilter({ ...filter, city: "" })}
-                                    >
-                                        City: {filter.city}
                                     </Tag>
                                 )}
                             </Space>
                         </Col>
                         <Col>
-                            <Button
-                                type="default"
-                                size="small"
-                                onClick={() => setFilter({ search: "", state: "", city: "" })}
-                            >
+                            <Button size="small" onClick={handleClearAll}>
                                 Clear All
                             </Button>
                         </Col>
@@ -270,7 +256,6 @@ const ViewProductInstallation = () => {
                 )}
             </Card>
 
-            {/* Tabs */}
             <Card>
                 <Tabs activeKey={activeTab} onChange={setActiveTab}>
                     <TabPane tab="Pending" key="unapprove">
@@ -281,15 +266,15 @@ const ViewProductInstallation = () => {
                                 data={unapproveProduct}
                                 pagination={{
                                     current: unapprovePage,
-                                    pageSize: pagination.limit,
-                                    total: pagination.total,
+                                    pageSize: filter.limit,
+                                    total: pagination.total || 0,
+                                    showSizeChanger: true,
+                                    pageSizeOptions: ["10", "20", "50", "100"],
                                     onChange: handleTableChange,
                                 }}
                             />
                         </Spin>
                     </TabPane>
-
-                    {/* Approved Tab (shown second) */}
                     <TabPane tab="Approved" key="approve">
                         <Spin spinning={loading}>
                             <CustomTable
@@ -298,8 +283,10 @@ const ViewProductInstallation = () => {
                                 data={approveProduct}
                                 pagination={{
                                     current: approvePage,
-                                    pageSize: pagination.limit,
-                                    total: pagination.total,
+                                    pageSize: filter.limit,
+                                    total: pagination.total || 0,
+                                    showSizeChanger: true,
+                                    pageSizeOptions: ["10", "20", "50", "100"],
                                     onChange: handleTableChange,
                                 }}
                             />
@@ -308,8 +295,6 @@ const ViewProductInstallation = () => {
                 </Tabs>
             </Card>
 
-
-            {/* Approve Modal */}
             <Modal
                 title="Approve Product Installation"
                 open={approveModal}
@@ -321,9 +306,7 @@ const ViewProductInstallation = () => {
                     <>
                         <div className="mb-4">
                             <p className="font-semibold mb-2">Images:</p>
-                            <div className="flex flex-wrap gap-3">
-                                {renderImages(selectedItem.images)}
-                            </div>
+                            <div className="flex flex-wrap gap-3">{renderImages(selectedItem.images)}</div>
                         </div>
 
                         <div>
@@ -341,10 +324,7 @@ const ViewProductInstallation = () => {
                                 type="primary"
                                 loading={approveLoading}
                                 onClick={async () => {
-                                    if (!selectedItem?._id) {
-                                        message.error("Invalid product record!");
-                                        return;
-                                    }
+                                    if (!selectedItem?._id) return message.error("Invalid record");
 
                                     const payload = {
                                         _id: selectedItem._id,
@@ -353,24 +333,21 @@ const ViewProductInstallation = () => {
 
                                     try {
                                         await dispatch(approveProducts(payload)).unwrap();
-                                        message.success("Product approved successfully!");
+                                        message.success("Approved!");
                                         setApproveModal(false);
                                         fetchProduct();
-                                    } catch (error) {
-                                        message.error(error || "Failed to approve product.");
+                                    } catch (e) {
+                                        message.error(e?.message || "Failed");
                                     }
                                 }}
                             >
                                 Submit Approval
                             </Button>
-
                         </div>
                     </>
                 )}
             </Modal>
 
-            {/* View Image Modal */}
-            {/* View Image Modal */}
             <Modal
                 title="View Product Installation"
                 open={viewModal}
@@ -380,38 +357,43 @@ const ViewProductInstallation = () => {
             >
                 {selectedItem && (
                     <div className="space-y-4">
-                        {/* Images */}
-                        <div className="flex flex-wrap gap-3">
-                            {renderImages(selectedItem.images)}
-                        </div>
-
-                        {/* Approval Notes */}
+                        <div className="flex flex-wrap gap-3">{renderImages(selectedItem.images)}</div>
                         <div>
                             <p className="font-semibold mb-1">Approval Notes:</p>
                             <div className="p-3 border rounded-md bg-gray-50">
-                                {selectedItem.approval_notes || "-"}
+                                {selectedItem.approval_notes || " "}
                             </div>
                         </div>
                     </div>
                 )}
             </Modal>
 
-
-            {/* Full Image Preview */}
             <Modal
                 open={!!imagePreview}
                 footer={null}
                 onCancel={() => setImagePreview(null)}
                 centered
                 width={900}
-                closeIcon={<Icons.CloseOutlined />}
+                bodyStyle={{
+                    padding: 0,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "#000",
+                }}
+                closable
+                closeIcon={<Icons.CloseOutlined style={{ color: "#fff" }} />}
             >
                 {imagePreview && (
-                    <Image
+                    <img
                         src={imagePreview}
-                        alt="Full Preview"
-                        style={{ width: "100%", borderRadius: 8 }}
-                        preview={false}
+                        alt="Preview"
+                        style={{
+                            maxWidth: "100%",
+                            maxHeight: "80vh",
+                            objectFit: "contain",
+                            borderRadius: 8,
+                        }}
                     />
                 )}
             </Modal>

@@ -53,13 +53,14 @@ const AppSidebar = ({ collapsed, setCollapsed }) => {
       label: "Technician",
       path: "/technician",
     },
-    //  {
-    //   key: "5",
-    //   icon: <Icons.ProductOutlined />,
-    //   label: "Product Installation",
-    //   path: "/product",
-    // },
+     {
+      key: "5",
+      icon: <Icons.ProductOutlined />,
+      label: "Product Installation",
+      path: "/product",
+    },
   ];
+  
 
   const handleMenuClick = ({ key }) => {
     const item = items.find((i) => i.key === key);
