@@ -30,8 +30,9 @@ const ViewProductInstallation = () => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
-    approveProduct,
-    unapproveProduct,
+    // approveProduct,
+    // unapproveProduct,
+    product,
     loading,
     approveLoading,
     pagination,
@@ -63,6 +64,14 @@ const ViewProductInstallation = () => {
     });
     setSearchParams(params);
   };
+
+  const handleTabChange = (record) => {
+    setUrl({
+      page: 1,
+      limit: 10,
+    });
+    setActiveTab(record);
+  }
 
   const handleSearch = async (searchValue = filter.search) => {
     const isApproved = activeTab === "approve";
@@ -172,15 +181,10 @@ const ViewProductInstallation = () => {
     },
   ];
 
-  const handleTableChange = (p) => {
-    const { current, pageSize } = p;
-    const isApprove = activeTab === "approve";
-    if (isApprove) setApprovePage(current);
-    else setUnapprovePage(current);
+  const handleTableChange = (page, pageSize) => {
     setUrl({
-      page: current,
+      page: page,
       limit: pageSize,
-      search: filter.search,
     });
   };
 
@@ -277,19 +281,17 @@ const ViewProductInstallation = () => {
       </Card>
 
       <Card>
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
+        <Tabs activeKey={activeTab} onChange={handleTabChange}>
           <TabPane tab="Pending" key="unapprove">
             <Spin spinning={loading}>
               <CustomTable
                 tableId="pendingProductInstallation"
                 columns={columns}
-                data={unapproveProduct}
+                data={product}
                 pagination={{
-                  current: unapprovePage,
-                  pageSize: filter.limit,
+                  current: pagination.page,
+                  pageSize: pagination.limit,
                   total: pagination.total || 0,
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50", "100"],
                   onChange: handleTableChange,
                 }}
               />
@@ -298,15 +300,13 @@ const ViewProductInstallation = () => {
           <TabPane tab="Approved" key="approve">
             <Spin spinning={loading}>
               <CustomTable
-                tableId="approveProductInstallation"
+                tableId="pendingProductInstallation"
                 columns={columns}
-                data={approveProduct}
+                data={product}
                 pagination={{
-                  current: approvePage,
-                  pageSize: filter.limit,
+                  current: pagination.page,
+                  pageSize: pagination.limit,
                   total: pagination.total || 0,
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50", "100"],
                   onChange: handleTableChange,
                 }}
               />
@@ -433,7 +433,7 @@ const ViewProductInstallation = () => {
                 {selectedItem.approval_notes || " "}
               </div>
             </div>
-                        <div className="mt-4">
+            <div className="mt-4">
               <label className="font-semibold mb-2 block text-gray-700">
                 Product Details:
               </label>
