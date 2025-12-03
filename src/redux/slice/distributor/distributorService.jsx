@@ -25,7 +25,7 @@ const getDistributorById = async (payload) => {
 
 const getDistributorDropdown = async () => {
 
-    const res = await api.get("/distributor/getDistributors");
+    const res = await api.get("/distributor/getDistributorsDropdown");
     return res.data;
 };
 
