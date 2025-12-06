@@ -37,8 +37,7 @@ export const approveProducts = createAsyncThunk(
 const productSlice = createSlice({
     name: "product",
     initialState: {
-        approveProduct: [],
-        unapproveProduct: [],
+        product: [],
         pagination: {
             page: 1,
             total: 0,
@@ -62,15 +61,7 @@ const productSlice = createSlice({
             })
             .addCase(getProducts.fulfilled, (state, action) => {
                 state.loading = false;
-                const { isApproved } = action.meta.arg;
-                const resultData = action.payload.data || action.payload?.data?.data || [];
-
-                if (isApproved) {
-                    state.approveProduct = resultData;
-                } else {
-                    state.unapproveProduct = resultData;
-                }
-
+                state.product = action.payload.data
                 state.pagination = {
                     page: action.payload.extras?.page,
                     total: action.payload.extras?.total,

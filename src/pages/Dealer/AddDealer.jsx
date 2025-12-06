@@ -57,6 +57,17 @@ function AddDealer() {
     }
   }, [dealerId, dealerById, form]);
 
+  useEffect(() => {
+    if (!dealerId && Array.isArray(distributorDrop) && distributorDrop.length) {
+      const current = form.getFieldValue("distributorId");
+      if (current) return; 
+      const defaultDist = distributorDrop.find((d) => d.default === true);
+      if (defaultDist) {
+        form.setFieldsValue({ distributorId: defaultDist._id });
+      }
+    }
+  }, [distributorDrop, dealerId, form]);
+
   const onFinish = async (values) => {
     const payload = {
       distributorId: values.distributorId,
