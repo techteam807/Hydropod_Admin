@@ -58,6 +58,7 @@ const AddDistributor = () => {
           state: distributorById?.distributor?.other_address?.state || "",
           pincode: distributorById?.distributor?.other_address?.pincode || "",
         },
+        msme_number: distributorById?.distributor?.msme_number,
         gst_number: distributorById?.distributor?.gst_number,
         additional_notes: distributorById?.distributor?.additional_notes,
         terms_conditions: distributorById?.distributor?.terms_conditions,
@@ -70,6 +71,7 @@ const AddDistributor = () => {
       company_name: values.company_name || "",
       name: values.name || "",
       gst_number: values?.gst_number,
+      msme_number: values?.msme_number,
       email: values.email || "",
       mobile_number: values.mobile_number || "",
       office_address: {
@@ -188,6 +190,12 @@ const AddDistributor = () => {
                   label="GST Number"
                   placeholder="Enter GST Number"
                   rules={[{ required: true, message: "Please enter GST Number" }]}
+                />
+                  <CustomInput
+                  type="text"
+                  name="msme_number"
+                  label="MSME Number"
+                  placeholder="Enter MSME Number"
                 />
               </div>
             </div>
