@@ -22,6 +22,8 @@ import {
   getProducts,
 } from "../../redux/slice/product/productSlice";
 import { useSearchParams } from "react-router-dom";
+import CustomInput from "../../component/commonComponent/CustomInput";
+import { statesAndCities } from "../../constants/cities";
 
 const { Search } = Input;
 const { TabPane } = Tabs;
@@ -51,10 +53,18 @@ const ViewProductInstallation = () => {
 
   const [filter, setFilter] = useState({
     search: searchParams.get("search") || "",
+    state: searchParams.get("state") || "",
+    city: searchParams.get("city") || "",
     limit: parseInt(searchParams.get("limit")) || 10,
   });
 
-  const hasActiveFilters = !!filter.search;
+
+  const hasActiveFilters = !!(
+    filter.search ||
+    filter.state ||
+    filter.city
+  );
+
 
   const setUrl = (updates) => {
     const params = new URLSearchParams(searchParams);
@@ -73,13 +83,23 @@ const ViewProductInstallation = () => {
     setActiveTab(record);
   }
 
-  const handleSearch = async (searchValue = filter.search) => {
+  const handleSearch = async () => {
     const isApproved = activeTab === "approve";
     const page = isApproved ? approvePage : unapprovePage;
-    const limit = filter.limit;
-    const payload = { search: searchValue, page, limit, isApproved };
-    await dispatch(getProducts(payload));
+
+    await dispatch(
+      getProducts({
+        search: filter.search,
+        page,
+        limit: filter.limit,
+        state: filter.state,
+        city: filter.city,
+        isApproved,
+      })
+    );
   };
+
+
 
   const fetchProduct = () => handleSearch(filter.search);
 
@@ -242,15 +262,64 @@ const ViewProductInstallation = () => {
                     page: 1,
                     limit: filter.limit,
                     search: filter.search,
+                    state: filter.state,
+                    city: filter.city,
                   });
                   handleSearch();
                 }}
               >
                 Apply Filter
               </Button>
+
             </Space>
           </Col>
         </Row>
+        {visible && (
+          <Row className="mt-3" gutter={16}>
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                name="state"
+                label="State"
+                placeholder="Select State"
+                options={Object.keys(statesAndCities).map((state) => ({
+                  label: state,
+                  value: state,
+                }))}
+                value={filter.state || undefined}
+                onChange={(value) =>
+                  setFilter((prev) => ({
+                    ...prev,
+                    state: value,
+                    city: "",
+                  }))
+                }
+              />
+            </Col>
+
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                name="city"
+                label="City"
+                placeholder="Select City"
+                options={
+                  filter.state
+                    ? statesAndCities[filter.state].map((city) => ({
+                      label: city,
+                      value: city.trim(),  // trim here
+                    }))
+                    : []
+                }
+                value={filter.city || undefined}
+                onChange={(value) =>
+                  setFilter((prev) => ({ ...prev, city: value.trim() })) // trim here
+                }
+                disabled={!filter.state}
+              />
+            </Col>
+          </Row>
+        )}
 
         {hasActiveFilters && (
           <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
@@ -269,6 +338,33 @@ const ViewProductInstallation = () => {
                     Search: {filter.search}
                   </Tag>
                 )}
+                {filter.state && (
+                  <Tag
+                    color="green"
+                    closable
+                    onClose={() => {
+                      setFilter((prev) => ({ ...prev, state: "", city: "" }));
+                      setUrl({ state: "", city: "" });
+                      handleSearch();
+                    }}
+                  >
+                    State: {filter.state}
+                  </Tag>
+                )}
+
+                {filter.city && (
+                  <Tag
+                    color="orange"
+                    closable
+                    onClose={() => {
+                      setFilter((prev) => ({ ...prev, city: "" }));
+                      setUrl({ city: "" });
+                      handleSearch();
+                    }}
+                  >
+                    City: {filter.city}
+                  </Tag>
+                )}
               </Space>
             </Col>
             <Col>
@@ -281,38 +377,50 @@ const ViewProductInstallation = () => {
       </Card>
 
       <Card>
-        <Tabs activeKey={activeTab} onChange={handleTabChange}>
-          <TabPane tab="Pending" key="unapprove">
-            <Spin spinning={loading}>
-              <CustomTable
-                tableId="pendingProductInstallation"
-                columns={columns}
-                data={product}
-                pagination={{
-                  current: pagination.page,
-                  pageSize: pagination.limit,
-                  total: pagination.total || 0,
-                  onChange: handleTableChange,
-                }}
-              />
-            </Spin>
-          </TabPane>
-          <TabPane tab="Approved" key="approve">
-            <Spin spinning={loading}>
-              <CustomTable
-                tableId="pendingProductInstallation"
-                columns={columns}
-                data={product}
-                pagination={{
-                  current: pagination.page,
-                  pageSize: pagination.limit,
-                  total: pagination.total || 0,
-                  onChange: handleTableChange,
-                }}
-              />
-            </Spin>
-          </TabPane>
-        </Tabs>
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          items={[
+            {
+              key: "unapprove",
+              label: "Pending",
+              children: (
+                <Spin spinning={loading}>
+                  <CustomTable
+                    rowKey="_id"
+                    columns={columns}
+                    data={product}
+                    pagination={{
+                      current: pagination.page,
+                      pageSize: pagination.limit,
+                      total: pagination.total || 0,
+                      onChange: handleTableChange,
+                    }}
+                  />
+                </Spin>
+              ),
+            },
+            {
+              key: "approve",
+              label: "Approved",
+              children: (
+                <Spin spinning={loading}>
+                  <CustomTable
+                    rowKey="_id"
+                    columns={columns}
+                    data={product}
+                    pagination={{
+                      current: pagination.page,
+                      pageSize: pagination.limit,
+                      total: pagination.total || 0,
+                      onChange: handleTableChange,
+                    }}
+                  />
+                </Spin>
+              ),
+            },
+          ]}
+        />
       </Card>
 
       <Modal
