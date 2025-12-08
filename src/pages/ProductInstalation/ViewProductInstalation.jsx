@@ -275,51 +275,56 @@ const ViewProductInstallation = () => {
           </Col>
         </Row>
         {visible && (
-          <Row className="mt-3" gutter={16}>
-            <Col xs={24} sm={12} md={6}>
-              <CustomInput
-                type="select"
-                name="state"
-                label="State"
-                placeholder="Select State"
-                options={Object.keys(statesAndCities).map((state) => ({
-                  label: state,
-                  value: state,
-                }))}
-                value={filter.state || undefined}
-                onChange={(value) =>
-                  setFilter((prev) => ({
-                    ...prev,
-                    state: value,
-                    city: "",
-                  }))
-                }
-              />
-            </Col>
+  <Row className="mt-3" gutter={16}>
+    <Col xs={24} sm={12} md={6}>
+      <CustomInput
+        type="select"
+        name="state"
+        label="State"
+        placeholder="Select State"
+        options={Object.keys(statesAndCities).map((state) => ({
+          label: state,
+          value: state,
+        }))}
+        value={filter.state || undefined}
+        onChange={(value) => {
+          setFilter((prev) => ({
+            ...prev,
+            state: value,
+            city: "", // reset city
+          }));
+          setUrl({ state: value, city: "", page: 1 }); // update URL
+          handleSearch(); // fetch products immediately
+        }}
+      />
+    </Col>
 
-            <Col xs={24} sm={12} md={6}>
-              <CustomInput
-                type="select"
-                name="city"
-                label="City"
-                placeholder="Select City"
-                options={
-                  filter.state
-                    ? statesAndCities[filter.state].map((city) => ({
-                      label: city,
-                      value: city.trim(),  // trim here
-                    }))
-                    : []
-                }
-                value={filter.city || undefined}
-                onChange={(value) =>
-                  setFilter((prev) => ({ ...prev, city: value.trim() })) // trim here
-                }
-                disabled={!filter.state}
-              />
-            </Col>
-          </Row>
-        )}
+    <Col xs={24} sm={12} md={6}>
+      <CustomInput
+        type="select"
+        name="city"
+        label="City"
+        placeholder="Select City"
+        options={
+          filter.state
+            ? statesAndCities[filter.state].map((city) => ({
+                label: city,
+                value: city.trim(),
+              }))
+            : []
+        }
+        value={filter.city || undefined}
+        onChange={(value) => {
+          setFilter((prev) => ({ ...prev, city: value.trim() }));
+          setUrl({ city: value.trim(), page: 1 }); // update URL
+          handleSearch(); // fetch products immediately
+        }}
+        disabled={!filter.state}
+      />
+    </Col>
+  </Row>
+)}
+
 
         {hasActiveFilters && (
           <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
