@@ -19,6 +19,7 @@ import ViewDistributorDetails from "./pages/Distributor/ViewDistributorDetails";
 import ViewDistributorDealer from "./pages/Dealer/ViewDealerDetails";
 import ViewDealerDetails from "./pages/Dealer/ViewDealerDetails";
 import ViewProductInstallation from "./pages/ProductInstalation/ViewProductInstalation";
+import ViewBanners from "./pages/Banner/ViewBanners";
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/technician/edit/:technicianId" element={<AddTechnician />} />
     
           <Route path="/product" element={<ViewProductInstallation />} />
+          <Route path="/banner" element={<ViewBanners />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
