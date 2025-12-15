@@ -111,6 +111,25 @@ export const restoreTechnician = createAsyncThunk(
     }
   }
 );
+export const getTechnicianDropdown = createAsyncThunk(
+  "technician/getTechnicianDropdown",
+  async ({ parentType, parentId }) => {
+    try {
+      const response = await technicianService.getTechnicianDropdown(
+        parentType,
+        parentId
+      );
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
+      );
+    }
+  }
+);
+ 
 
 const technicianSlice = createSlice({
   name: "technician",
@@ -118,6 +137,7 @@ const technicianSlice = createSlice({
     technician: [],
     activeTechnician: [],
     inactiveTechnician: [],
+     technicianDropdown: [],
     singleTechnician: null,
     count: [],
     pagination: {
@@ -129,6 +149,7 @@ const technicianSlice = createSlice({
     loading: false,
     postLoading: false,
     deleteLoading: false,
+     dropdownLoading: false,
     restoreLoading: false,
     error: null,
   },
@@ -140,6 +161,17 @@ const technicianSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+    .addCase(getTechnicianDropdown.pending, (state) => {
+  state.dropdownLoading = true;
+})
+.addCase(getTechnicianDropdown.fulfilled, (state, action) => {
+  state.dropdownLoading = false;
+  state.technicianDropdown = action.payload.data;
+})
+.addCase(getTechnicianDropdown.rejected, (state, action) => {
+  state.dropdownLoading = false;
+  state.error = action.error.message;
+})
       .addCase(addTechnician.pending, (state) => {
         state.postLoading = true;
       })
@@ -237,6 +269,7 @@ const technicianSlice = createSlice({
               state.error = action.error.message;
               toast.error(state.error);
             });
+            
   },
 });
 

@@ -142,6 +142,7 @@ const ViewDistributor = () => {
   const columns = [
     { title: "Company Name", dataIndex: "company_name", key: "company_name" },
     { title: "Name", dataIndex: "name", key: "name" },
+    {title: "MSME" , dataIndex: "msme_number" , key: "msme_number"},
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Mobile", dataIndex: "mobile_number", key: "mobile_number" },
     {

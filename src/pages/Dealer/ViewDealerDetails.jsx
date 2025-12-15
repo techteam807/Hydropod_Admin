@@ -115,6 +115,8 @@ const ViewDealerDetails = () => {
             >
               <div className="space-y-2 text-[15px] leading-relaxed">
                 <div className="flex"><span className="font-medium w-28 text-gray-500">Name : </span> <span>{dealer?.name || "—"}</span></div>
+                <div className="flex"><span className="font-medium w-28 text-gray-500">GST : </span><span>{dealer?.gst_number ||"—"}</span></div>
+                <div className="flex"><span className="font-medium w-28 text-gray-500">MSME : </span> <span>{dealer?.msme_number || "—"}</span></div>
                 <div className="flex"><span className="font-medium w-28 text-gray-500">Company : </span> <span>{dealer?.company_name || "—"}</span></div>
                 <div className="flex"><span className="font-medium w-28 text-gray-500">Email : </span> <span>{dealer?.email || "—"}</span></div>
                 <div className="flex"><span className="font-medium w-28 text-gray-500">Mobile : </span> <span>{dealer?.mobile_number || "—"}</span></div>

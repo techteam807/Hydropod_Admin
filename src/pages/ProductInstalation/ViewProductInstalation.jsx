@@ -17,6 +17,7 @@ import {
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
 import { useDispatch, useSelector } from "react-redux";
+
 import {
   approveProducts,
   getProducts,
@@ -24,13 +25,24 @@ import {
 import { useSearchParams } from "react-router-dom";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { statesAndCities } from "../../constants/cities";
-
-const { Search } = Input;
-const { TabPane } = Tabs;
-
+import {
+  getTechnicianDropdown,
+} from "../../redux/slice/technician/technicianSlice";
+import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
+import { getDealerDropdown } from "../../redux/slice/dealer/dealerSlice";
 const ViewProductInstallation = () => {
+
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
+
+
+  const { technicianDropdown = [], dropdownLoading = false } = useSelector(
+    (state) => state.technician
+  );
+  const { distributorDrop = [] } = useSelector((state) => state.distributor);
+  const { dealerDrop = [] } = useSelector((state) => state.dealer);
+  const { Search } = Input;
+  const { TabPane } = Tabs;
   const {
     // approveProduct,
     // unapproveProduct,
@@ -47,16 +59,47 @@ const ViewProductInstallation = () => {
   const [viewModal, setViewModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   console.log("sel:", selectedItem);
+  const { user } = useSelector((state) => state.auth); // get logged-in user
 
   const [imagePreview, setImagePreview] = useState(null);
   const [approvalNotes, setApprovalNotes] = useState("");
+
 
   const [filter, setFilter] = useState({
     search: searchParams.get("search") || "",
     state: searchParams.get("state") || "",
     city: searchParams.get("city") || "",
+    userParentType: "",
+    userParentId: "",
+    technicianId: "",
     limit: parseInt(searchParams.get("limit")) || 10,
   });
+  const [parentDropdownOptions, setParentDropdownOptions] = useState([]);
+
+
+
+  // Fetch distributor and dealer dropdowns on component mount
+  useEffect(() => {
+    dispatch(getDistributorDropdown());
+    dispatch(getDealerDropdown());
+  }, [dispatch]);
+
+
+
+  // Fetch technician dropdown whenever userParentType / userParentId changes
+  useEffect(() => {
+    if (filter.userParentType) {
+      const parentId = filter.userParentType === "admin" ? user?._id : filter.userParentId;
+      if (parentId) {
+        dispatch(getTechnicianDropdown({ parentType: filter.userParentType, parentId }));
+      }
+    }
+  }, [filter.userParentType, filter.userParentId, dispatch, user?._id]);
+
+
+  const [cityOptions, setCityOptions] = useState(
+    filter.state ? statesAndCities[filter.state] || [] : []
+  );
 
 
   const hasActiveFilters = !!(
@@ -76,46 +119,88 @@ const ViewProductInstallation = () => {
   };
 
   const handleTabChange = (record) => {
-    setUrl({
-      page: 1,
-      limit: 10,
-    });
     setActiveTab(record);
-  }
+    setApprovePage(1);
+    setUnapprovePage(1);
 
-  const handleSearch = async () => {
-    const isApproved = activeTab === "approve";
-    const page = isApproved ? approvePage : unapprovePage;
+    setUrl({ page: 1, limit: 10 });
 
-    await dispatch(
-      getProducts({
-        search: filter.search,
-        page,
-        limit: filter.limit,
-        state: filter.state,
-        city: filter.city,
-        isApproved,
-      })
-    );
+    handleSearch({
+      ...filter,
+      page: 1,
+    });
   };
 
 
+  const handleSearch = async (overrideFilter) => {
+    const currentFilter = overrideFilter ?? filter;
+    const pageFromUrl = parseInt(searchParams.get("page")) || 1;
 
-  const fetchProduct = () => handleSearch(filter.search);
+    const payload = {
+      search: [currentFilter.search, currentFilter.city]
+        .filter(Boolean)
+        .join(" "),
+      page: pageFromUrl,
+      limit: currentFilter.limit,
+      state: currentFilter.state,
+      isApproved: activeTab === "approve",
+      technicianId: currentFilter.technicianId || "",
+      parentType: currentFilter.userParentType || "",
+      parentId: currentFilter.userParentId || "",
+    };
+
+    dispatch(getProducts(payload));
+  };
+
+  const fetchProduct = () => handleSearch(filter);
 
   useEffect(() => {
     fetchProduct();
-  }, [activeTab, approvePage, unapprovePage, filter.limit]);
-
+  }, [
+    activeTab,
+    approvePage,
+    unapprovePage,
+    filter.limit,
+    filter.state,
+    filter.city,
+    filter.technicianId,
+    filter.userParentType,
+    filter.userParentId,
+  ]);
   useEffect(() => {
     const urlSearch = searchParams.get("search") || "";
     const urlLimit = parseInt(searchParams.get("limit")) || 10;
     const urlPage = parseInt(searchParams.get("page")) || 1;
-    setFilter((prev) => ({ ...prev, search: urlSearch, limit: urlLimit }));
+    const urlState = searchParams.get("state") || "";
+    const urlCity = searchParams.get("city") || "";
+    const urlUserParentType = searchParams.get("userParentType") || "";
+    const urlUserParentId = searchParams.get("userParentId") || "";
+    const urlTechnicianId = searchParams.get("technicianId") || "";
+    setFilter((prev) => ({
+      ...prev,
+      search: urlSearch,
+      limit: urlLimit,
+      state: urlState,
+      city: urlCity,
+      userParentType: urlUserParentType,
+      userParentId: urlUserParentId,
+      technicianId: urlTechnicianId,
+    }));
+
+    
+    if (urlState) {
+      setCityOptions(statesAndCities[urlState] || []);
+    }
+
     const isApprove = activeTab === "approve";
     if (isApprove) setApprovePage(urlPage);
     else setUnapprovePage(urlPage);
   }, [searchParams, activeTab]);
+  useEffect(() => {
+    console.log("Selected State:", filter.state);
+    console.log("City Options:", cityOptions);
+  }, [filter.state, cityOptions]);
+
 
   const getImageUrl = (img) => {
     if (!img) return null;
@@ -155,6 +240,16 @@ const ViewProductInstallation = () => {
     { title: "Product Code", dataIndex: "productCode", key: "productCode" },
     { title: "Customer Name", dataIndex: "name", key: "name" },
     {
+      title: "State",
+      key: "state",
+      render: (_, r) => r.address?.state || "-",
+    },
+    {
+      title: "City",
+      key: "city",
+      render: (_, r) => r.address?.city?.trim() || "-",
+    },
+    {
       title: "Installation Date",
       dataIndex: "installation_date",
       key: "installation_date",
@@ -162,9 +257,13 @@ const ViewProductInstallation = () => {
     },
     {
       title: "Installation By",
-      dataIndex: "technicianId",
-      key: "technicianId",
-      render: (t) => (t ? t.name : "-"),
+      dataIndex: "installationBy",
+      key: "installationBy",
+      render: (t) => {
+        if (!t) return "-";
+        const { name, companyName, type } = t;
+        return `${name} - ${companyName} (${type})`;
+      },
     },
     {
       title: "Action",
@@ -209,12 +308,15 @@ const ViewProductInstallation = () => {
   };
 
   const handleClearAll = () => {
-    setFilter({ search: "", limit: 10 });
+    const clearedFilter = { search: "", state: "", city: "", limit: 10 };
+    setFilter(clearedFilter);
+    setCityOptions([]);
     setApprovePage(1);
     setUnapprovePage(1);
-    setUrl({ page: 1, limit: 10, search: "" });
-    handleSearch("");
+    setUrl({ page: 1, limit: 10, search: "", state: "", city: "" });
+    handleSearch(clearedFilter);
   };
+
 
   return (
     <div className="m-4">
@@ -239,13 +341,16 @@ const ViewProductInstallation = () => {
                 setFilter((prev) => ({ ...prev, search: v }));
                 if (!v) {
                   setUrl({ page: 1, search: "" });
-                  handleSearch("");
+                  handleSearch({ ...filter, search: "" });
                 }
               }}
               onSearch={(v) => {
+                const newFilter = { ...filter, search: v };
+                setFilter(newFilter);
                 setUrl({ page: 1, search: v });
-                handleSearch(v);
+                handleSearch(newFilter);
               }}
+
               allowClear
             />
           </Col>
@@ -264,6 +369,9 @@ const ViewProductInstallation = () => {
                     search: filter.search,
                     state: filter.state,
                     city: filter.city,
+                    userParentType: filter.userParentType,
+                    userParentId: filter.userParentId,
+                    technicianId: filter.technicianId,
                   });
                   handleSearch();
                 }}
@@ -275,57 +383,139 @@ const ViewProductInstallation = () => {
           </Col>
         </Row>
         {visible && (
-  <Row className="mt-3" gutter={16}>
-    <Col xs={24} sm={12} md={6}>
-      <CustomInput
-        type="select"
-        name="state"
-        label="State"
-        placeholder="Select State"
-        options={Object.keys(statesAndCities).map((state) => ({
-          label: state,
-          value: state,
-        }))}
-        value={filter.state || undefined}
-        onChange={(value) => {
-          setFilter((prev) => ({
-            ...prev,
-            state: value,
-            city: "", // reset city
-          }));
-          setUrl({ state: value, city: "", page: 1 }); // update URL
-          handleSearch(); // fetch products immediately
-        }}
-      />
-    </Col>
+          <Row className="mt-3" gutter={16}>
+            {/* State Selector */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                name="state"
+                label="State"
+                placeholder="Select State"
+                options={Object.keys(statesAndCities).map((state) => ({
+                  label: state,
+                  value: state,
+                }))}
+                value={filter.state || undefined}
+                onChange={(value) => {
+                  const selectedState = value || "";
+                  const newFilter = {
+                    ...filter,
+                    state: selectedState,
+                    city: "",
+                  };
 
-    <Col xs={24} sm={12} md={6}>
-      <CustomInput
-        type="select"
-        name="city"
-        label="City"
-        placeholder="Select City"
-        options={
-          filter.state
-            ? statesAndCities[filter.state].map((city) => ({
-                label: city,
-                value: city.trim(),
-              }))
-            : []
-        }
-        value={filter.city || undefined}
-        onChange={(value) => {
-          setFilter((prev) => ({ ...prev, city: value.trim() }));
-          setUrl({ city: value.trim(), page: 1 }); // update URL
-          handleSearch(); // fetch products immediately
-        }}
-        disabled={!filter.state}
-      />
-    </Col>
-  </Row>
-)}
+                  setFilter(newFilter);
+                  setCityOptions(statesAndCities[selectedState] || []);
+                  setUrl({ state: selectedState, city: "", page: 1 });
 
+                  handleSearch(newFilter);
+                }}
 
+              />
+            </Col>
+
+            {/* City Selector */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                name="city"
+                label="City"
+                placeholder="Select City"
+                options={cityOptions.map((city) => ({
+                  label: city,
+                  value: city,
+                }))}
+                value={filter.city || undefined}
+                disabled={!filter.state}
+                onChange={(value) => {
+                  const selectedCity = value || "";
+
+                  const newFilter = {
+                    ...filter,
+                    city: selectedCity,
+                  };
+
+                  setFilter(newFilter);
+                  setUrl({ city: selectedCity, page: 1 });
+                  handleSearch(newFilter);
+                }}
+              />
+            </Col>
+
+            {/* User Parent Type */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                label="Parent Type"
+                placeholder="Select Parent Type"
+                options={[
+                  { label: "Admin", value: "admin" },
+                  { label: "Distributor", value: "distributor" },
+                  { label: "Dealer", value: "dealer" },
+                ]}
+                value={filter.userParentType || undefined}
+                onChange={(v) => setFilter({ ...filter, userParentType: v, userParentId: "", technicianId: "" })}
+              />
+            </Col>
+
+            {/* Distributor Selection
+            {filter.userParentType === "distributor" && (
+              <Col xs={24} sm={12} md={6}>
+                <CustomInput
+                  type="select"
+                  name="userParentId"
+                  label="Distributor"
+                  placeholder="Select Distributor"
+                  options={distributorDrop.map((d) => ({
+                    label: d.name || d.company_name,
+                    value: d._id,
+                  }))}
+                  value={filter.userParentId || undefined}
+                  onChange={(v) => setFilter({ ...filter, userParentId: v, technicianId: "" })}
+                />
+              </Col>
+            )}
+
+            {/* Dealer Selection */}
+            {/* {filter.userParentType === "dealer" && (
+              <Col xs={24} sm={12} md={6}>
+                <CustomInput
+                  type="select"
+                  name="userParentId"
+                  label="Dealer"
+                  placeholder="Select Dealer"
+                  options={dealerDrop.map((d) => ({
+                    label: d.name || d.company_name,
+                    value: d._id,
+                  }))}
+                  value={filter.userParentId || undefined}
+                  onChange={(v) => setFilter({ ...filter, userParentId: v, technicianId: "" })}
+                />
+              </Col>
+            )} */} 
+
+            {/* Show Technician dropdown if admin OR parent is selected */}
+            {(filter.userParentType === "admin" || filter.userParentId) && (
+              <Col xs={24} sm={12} md={6}>
+                <CustomInput
+                  type="select"
+                  label="Technician"
+                  placeholder="Select Technician"
+                  options={technicianDropdown.map((t) => ({ label: t.name, value: t._id }))}
+                  value={filter.technicianId || undefined}
+                  loading={dropdownLoading}
+                  disabled={dropdownLoading}
+                  onChange={(id) => {
+                    setFilter((prev) => ({ ...prev, technicianId: id }));
+                    handleSearch({ ...filter, technicianId: id });
+                  }}
+                />
+              </Col>
+            )}
+
+          </Row>
+
+        )}
         {hasActiveFilters && (
           <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
             <Col flex="auto">
@@ -337,7 +527,7 @@ const ViewProductInstallation = () => {
                     onClose={() => {
                       setFilter((prev) => ({ ...prev, search: "" }));
                       setUrl({ page: 1, search: "" });
-                      handleSearch("");
+                      handleSearch({ ...filter, search: "" });
                     }}
                   >
                     Search: {filter.search}
@@ -623,7 +813,7 @@ const ViewProductInstallation = () => {
         )}
       </Modal>
     </div>
+
   );
 };
-
 export default ViewProductInstallation;

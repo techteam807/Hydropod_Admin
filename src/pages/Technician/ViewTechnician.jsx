@@ -5,6 +5,7 @@ import {
   deleteTechnician,
   getTechnician,
   restoreTechnician,
+   getTechnicianDropdown,
 } from "../../redux/slice/technician/technicianSlice";
 import { getDistributorDropdown } from "../../redux/slice/distributor/distributorSlice";
 import { getDealerDropdown } from "../../redux/slice/dealer/dealerSlice";
@@ -52,6 +53,7 @@ const ViewTechnician = () => {
     search: searchParams.get("search") || "",
     userParentType: searchParams.get("userParentType") || "",
     userParentId: searchParams.get("userParentId") || "",
+    technicianId: searchParams.get("technicianId") || "",
   });
 
   const updateUrlParams = (newParams) => {
@@ -72,6 +74,7 @@ const ViewTechnician = () => {
       page,
       userParentType: filter.userParentType || "",
       userParentId: filter.userParentId || "",
+      technicianId: filter.technicianId || "",
       isActive,
     };
 
@@ -86,10 +89,39 @@ const ViewTechnician = () => {
     dispatch(getDistributorDropdown());
     dispatch(getDealerDropdown());
   }, [dispatch]);
+useEffect(() => {
+  if (
+    filter.userParentType &&
+    filter.userParentType !== "admin" &&
+    filter.userParentId
+  ) {
+    dispatch(
+      getTechnicianDropdown({
+        parentType: filter.userParentType,
+        parentId: filter.userParentId,
+      })
+    );
+  }
+}, [filter.userParentType, filter.userParentId, dispatch]);
 
   const handleSearch = () => {
     updateUrlParams({ page: 1, limit: 10, search: filter.search });
   };
+  const { technicianDropdown, dropdownLoading } = useSelector(
+  (state) => state.technician
+);
+
+useEffect(() => {
+  if (filter.userParentType && filter.userParentId) {
+    dispatch(
+      getTechnicianDropdown({
+        parentType: filter.userParentType,
+        parentId: filter.userParentId,
+      })
+    );
+  }
+}, [filter.userParentType, filter.userParentId]);
+
 
   const handleFilter = () => {
     const userParentId =
@@ -101,6 +133,7 @@ const ViewTechnician = () => {
       search: filter.search || "",
       userParentType: filter.userParentType || "",
       userParentId,
+      technicianId: filter.technicianId || "",
       isActive: activeTab === "active",
     });
     setVisible(false);
@@ -114,6 +147,7 @@ const ViewTechnician = () => {
       search: "",
       userParentType: "",
       userParentId: "",
+      technicianId: "",
       isActive: activeTab === "active",
     });
   };
@@ -128,6 +162,7 @@ const ViewTechnician = () => {
       isActive: activeTab === "active",
     });
   };
+  
 
   const columns = [
     { title: "Technician Name", dataIndex: "name", key: "name" },
@@ -190,7 +225,7 @@ const ViewTechnician = () => {
 
   const hasActiveFilters =
     filter.search || filter.userParentType || filter.userParentId;
-
+   
   return (
     <div className="m-4">
       <Card className="!mb-4">
@@ -241,6 +276,21 @@ const ViewTechnician = () => {
         {visible && (
           <Row className="mt-2 p-4 border-t border-gray-100" gutter={16}>
             <Col xs={24} sm={12} md={6}>
+            <CustomInput
+  type="select"
+  name="technicianId"
+  label="Technician"
+  placeholder="Select Technician"
+  loading={dropdownLoading}
+  value={filter.technicianId || undefined}
+  options={technicianDropdown.map((t) => ({
+    label: t.name,
+    value: t._id,
+  }))}
+  onChange={(v) =>
+    setFilter({ ...filter, technicianId: v })
+  }
+/>
               <CustomInput
                 type="select"
                 name="userParentType"

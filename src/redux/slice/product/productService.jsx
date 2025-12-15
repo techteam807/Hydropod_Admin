@@ -8,19 +8,21 @@ const getProduct = async (payload) => {
     isApproved,
     state = "",
     city = "",
+    technicianId = "",
   } = payload;
 
   const res = await api.get(
     "/productInstallation/listProductInstallations",
     {
       params: {
-        search: search.trim(),
-        limit,
-        page,
-        isApproved,
-        state: state.trim(),
-        city: city.trim(),
-      },
+  search: search.trim(),
+  limit,
+  page,
+  isApproved,
+  state: state.trim(),
+ "address.city": city,
+ technicianId,
+}, 
     }
   );
 
