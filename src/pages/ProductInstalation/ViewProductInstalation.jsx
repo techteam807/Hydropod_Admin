@@ -25,6 +25,7 @@ import {
 import { useSearchParams } from "react-router-dom";
 import CustomInput from "../../component/commonComponent/CustomInput";
 import { statesAndCities } from "../../constants/cities";
+
 import {
   getTechnicianDropdown,
 } from "../../redux/slice/technician/technicianSlice";
@@ -39,6 +40,9 @@ const ViewProductInstallation = () => {
   const { technicianDropdown = [], dropdownLoading = false } = useSelector(
     (state) => state.technician
   );
+
+  console.log("technicianDropdown",technicianDropdown);
+  
   const { distributorDrop = [] } = useSelector((state) => state.distributor);
   const { dealerDrop = [] } = useSelector((state) => state.dealer);
   const { Search } = Input;
@@ -58,9 +62,7 @@ const ViewProductInstallation = () => {
   const [approveModal, setApproveModal] = useState(false);
   const [viewModal, setViewModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  console.log("sel:", selectedItem);
-  const { user } = useSelector((state) => state.auth); // get logged-in user
-
+  console.log("sel:", selectedItem);// get logged-in user
   const [imagePreview, setImagePreview] = useState(null);
   const [approvalNotes, setApprovalNotes] = useState("");
 
@@ -86,15 +88,18 @@ const ViewProductInstallation = () => {
 
 
 
+
   // Fetch technician dropdown whenever userParentType / userParentId changes
   useEffect(() => {
-    if (filter.userParentType) {
-      const parentId = filter.userParentType === "admin" ? user?._id : filter.userParentId;
-      if (parentId) {
-        dispatch(getTechnicianDropdown({ parentType: filter.userParentType, parentId }));
-      }
-    }
-  }, [filter.userParentType, filter.userParentId, dispatch, user?._id]);
+    // if (filter.userParentType) {
+    //   const parentId = filter.userParentType === "admin" ? user?._id : filter.userParentId;
+    //   if (parentId) {
+    //     dispatch(getTechnicianDropdown({ parentType: filter.userParentType, parentId }));
+    //   }
+    // }
+    // Fetch all technicians by calling with empty parameters
+    dispatch(getTechnicianDropdown({}));
+  }, [dispatch]);
 
 
   const [cityOptions, setCityOptions] = useState(
@@ -443,7 +448,7 @@ const ViewProductInstallation = () => {
             </Col>
 
             {/* User Parent Type */}
-            <Col xs={24} sm={12} md={6}>
+            {/* <Col xs={24} sm={12} md={6}>
               <CustomInput
                 type="select"
                 label="Parent Type"
@@ -456,7 +461,7 @@ const ViewProductInstallation = () => {
                 value={filter.userParentType || undefined}
                 onChange={(v) => setFilter({ ...filter, userParentType: v, userParentId: "", technicianId: "" })}
               />
-            </Col>
+            </Col> */}
 
             {/* Distributor Selection
             {filter.userParentType === "distributor" && (
@@ -495,7 +500,7 @@ const ViewProductInstallation = () => {
             )} */} 
 
             {/* Show Technician dropdown if admin OR parent is selected */}
-            {(filter.userParentType === "admin" || filter.userParentId) && (
+            
               <Col xs={24} sm={12} md={6}>
                 <CustomInput
                   type="select"
@@ -511,7 +516,6 @@ const ViewProductInstallation = () => {
                   }}
                 />
               </Col>
-            )}
 
           </Row>
 
