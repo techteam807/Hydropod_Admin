@@ -16,12 +16,16 @@ import {
 } from "antd";
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
+import CustomInput from "../../component/commonComponent/CustomInput";
+import { statesAndCities } from "../../constants/cities";
+import { getTechnicianDropdown } from "../../redux/slice/technician/technicianSlice";
 import { useDispatch, useSelector } from "react-redux";
 import {
   approveProducts,
   getProducts,
 } from "../../redux/slice/product/productSlice";
-import { useSearchParams } from "react-router-dom";
+
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const { Search } = Input;
 const { TabPane } = Tabs;
@@ -48,17 +52,27 @@ const ViewProductInstallation = () => {
 
   const [imagePreview, setImagePreview] = useState(null);
   const [approvalNotes, setApprovalNotes] = useState("");
-
+const { technicianDropdown, dropdownLoading } = useSelector(
+  (state) => state.technician
+);
   const [filter, setFilter] = useState({
-    search: searchParams.get("search") || "",
-    limit: parseInt(searchParams.get("limit")) || 10,
-  });
+  search: searchParams.get("search") || "",
+  state: searchParams.get("state") || "",
+  city: searchParams.get("city") || "",
+  technicianId: searchParams.get("technicianId") || "",
+  limit: parseInt(searchParams.get("limit")) || 10,
+});
+const [cityOptions, setCityOptions] = useState(
+  filter.state ? statesAndCities[filter.state] || [] : []
+);
 
-  const hasActiveFilters = !!filter.search;
 
-  const setUrl = (updates) => {
+  const hasActiveFilters = !!filter.search || !!filter.state || !!filter.city || !!filter.technicianId;
+
+
+  const updateUrlParams = (newParams) => {
     const params = new URLSearchParams(searchParams);
-    Object.entries(updates).forEach(([k, v]) => {
+    Object.entries(newParams).forEach(([k, v]) => {
       if (v) params.set(k, v);
       else params.delete(k);
     });
@@ -66,7 +80,7 @@ const ViewProductInstallation = () => {
   };
 
   const handleTabChange = (record) => {
-    setUrl({
+    updateUrlParams({
       page: 1,
       limit: 10,
     });
@@ -77,11 +91,24 @@ const ViewProductInstallation = () => {
     const isApproved = activeTab === "approve";
     const page = isApproved ? approvePage : unapprovePage;
     const limit = filter.limit;
-    const payload = { search: searchValue, page, limit, isApproved };
+    const payload = { search: searchValue, page, limit, isApproved , state: filter.state,
+    city: filter.city,
+    technicianId: filter.technicianId, };
     await dispatch(getProducts(payload));
   };
 
   const fetchProduct = () => handleSearch(filter.search);
+
+useEffect(() => {
+  if (filter.state) {
+    dispatch(
+      getTechnicianDropdown({
+        state: filter.state,
+        city: filter.city,
+      })
+    );
+  }
+}, [dispatch, filter.state, filter.city]);
 
   useEffect(() => {
     fetchProduct();
@@ -182,17 +209,17 @@ const ViewProductInstallation = () => {
   ];
 
   const handleTableChange = (page, pageSize) => {
-    setUrl({
+    updateUrlParams({
       page: page,
       limit: pageSize,
     });
   };
-
   const handleClearAll = () => {
-    setFilter({ search: "", limit: 10 });
+    setFilter({ search: "", state: "", city: "", technicianId: "", limit: 10 });
+    setCityOptions([]);
     setApprovePage(1);
     setUnapprovePage(1);
-    setUrl({ page: 1, limit: 10, search: "" });
+    updateUrlParams({ page: 1, limit: 10, search: "", state: "", city: "", technicianId: "" });
     handleSearch("");
   };
 
@@ -218,12 +245,12 @@ const ViewProductInstallation = () => {
                 const v = e.target.value;
                 setFilter((prev) => ({ ...prev, search: v }));
                 if (!v) {
-                  setUrl({ page: 1, search: "" });
+                  updateUrlParams({ page: 1, search: "" });
                   handleSearch("");
                 }
               }}
               onSearch={(v) => {
-                setUrl({ page: 1, search: v });
+                updateUrlParams({ page: 1, search: v });
                 handleSearch(v);
               }}
               allowClear
@@ -238,10 +265,13 @@ const ViewProductInstallation = () => {
                 type="primary"
                 icon={<Icons.FilterOutlined />}
                 onClick={() => {
-                  setUrl({
+                  updateUrlParams({
                     page: 1,
                     limit: filter.limit,
                     search: filter.search,
+                    state: filter.state,
+                    city: filter.city,
+                    technicianId: filter.technicianId,
                   });
                   handleSearch();
                 }}
@@ -251,6 +281,57 @@ const ViewProductInstallation = () => {
             </Space>
           </Col>
         </Row>
+{visible && (
+  <Row className="mt-2 p-4 border-t border-gray-100" gutter={16}>
+    {/* State */}
+    <Col xs={24} sm={12} md={6}>
+      <CustomInput
+        type="select"
+        placeholder="Select State"
+        options={Object.keys(statesAndCities).map((s) => ({
+          label: s,
+          value: s,
+        }))}
+        value={filter.state || undefined}
+        onChange={(v) => {
+          setFilter({ ...filter, state: v, city: "", technicianId: "" });
+          setCityOptions(statesAndCities[v] || []);
+        }}
+        label=""
+      />
+    </Col>
+
+    {/* City */}
+    <Col xs={24} sm={12} md={6}>
+      <CustomInput
+        type="select"
+        placeholder="Select City"
+        options={cityOptions.map((c) => ({ label: c, value: c }))}
+        value={filter.city || undefined}
+        onChange={(v) => setFilter({ ...filter, city: v, technicianId: "" })}
+        disabled={!filter.state}
+        label=""
+      />
+    </Col>
+
+    {/* Technician */}
+    <Col xs={24} sm={12} md={6}>
+      <CustomInput
+        type="select"
+        placeholder="Select Technician"
+        loading={dropdownLoading}
+        options={technicianDropdown.map((t) => ({
+          label: t.name,
+          value: t._id,
+        }))}
+        value={filter.technicianId || undefined}
+        onChange={(v) => setFilter({ ...filter, technicianId: v })}
+        // disabled removed so always selectable
+        label=""
+      />
+    </Col>
+  </Row>
+)}
 
         {hasActiveFilters && (
           <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
@@ -262,11 +343,51 @@ const ViewProductInstallation = () => {
                     closable
                     onClose={() => {
                       setFilter((prev) => ({ ...prev, search: "" }));
-                      setUrl({ page: 1, search: "" });
+                      updateUrlParams({ page: 1, search: "" });
                       handleSearch("");
                     }}
                   >
                     Search: {filter.search}
+                  </Tag>
+                )}
+                {filter.state && (
+                  <Tag
+                    color="green"
+                    closable
+                    onClose={() => {
+                      setFilter((prev) => ({ ...prev, state: "", city: "", technicianId: "" }));
+                      setCityOptions([]);
+                      updateUrlParams({ page: 1, state: "", city: "", technicianId: "" });
+                      handleSearch();
+                    }}
+                  >
+                    State: {filter.state}
+                  </Tag>
+                )}
+                {filter.city && (
+                  <Tag
+                    color="orange"
+                    closable
+                    onClose={() => {
+                      setFilter((prev) => ({ ...prev, city: "", technicianId: "" }));
+                      updateUrlParams({ page: 1, city: "", technicianId: "" });
+                      handleSearch();
+                    }}
+                  >
+                    City: {filter.city}
+                  </Tag>
+                )}
+                {filter.technicianId && (
+                  <Tag
+                    color="purple"
+                    closable
+                    onClose={() => {
+                      setFilter((prev) => ({ ...prev, technicianId: "" }));
+                      updateUrlParams({ page: 1, technicianId: "" });
+                      handleSearch();
+                    }}
+                  >
+                    Technician: {technicianDropdown.find(t => t._id === filter.technicianId)?.name || filter.technicianId}
                   </Tag>
                 )}
               </Space>
