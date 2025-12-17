@@ -97,8 +97,8 @@ export const deleteTechnician = createAsyncThunk(
   }
 );
 export const restoreTechnician = createAsyncThunk(
-  "Technician/restoreTechnician",
-  async (technicianId) => {
+  "technician/restoreTechnician", 
+   async (technicianId) => {
     try {
       const response = await technicianService.restoreTechnician(technicianId);
       return response;
@@ -134,7 +134,7 @@ const technicianSlice = createSlice({
     activeTechnician: [],
     inactiveTechnician: [],
     singleTechnician: null,
-     technicianDropdown: [],   // 🔹 added
+    technicianDropdown: [],   
   dropdownLoading: false,  
     count: [],
     pagination: {

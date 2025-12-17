@@ -52,19 +52,21 @@ const ViewProductInstallation = () => {
 
   const [imagePreview, setImagePreview] = useState(null);
   const [approvalNotes, setApprovalNotes] = useState("");
-const { technicianDropdown, dropdownLoading } = useSelector(
-  (state) => state.technician
-);
+  const { technicianDropdown, dropdownLoading } = useSelector(
+    (state) => state.technician
+  );
+
   const [filter, setFilter] = useState({
-  search: searchParams.get("search") || "",
-  state: searchParams.get("state") || "",
-  city: searchParams.get("city") || "",
-  technicianId: searchParams.get("technicianId") || "",
-  limit: parseInt(searchParams.get("limit")) || 10,
-});
-const [cityOptions, setCityOptions] = useState(
-  filter.state ? statesAndCities[filter.state] || [] : []
-);
+    search: searchParams.get("search") || "",
+    state: searchParams.get("state") || "",
+    city: searchParams.get("city") || "",
+    technicianId: searchParams.get("technicianId") || "",
+    limit: parseInt(searchParams.get("limit")) || 10,
+  });
+  const [cityOptions, setCityOptions] = useState(
+    filter.state ? statesAndCities[filter.state] || [] : []
+  );
+  const [citySearchText, setCitySearchText] = useState("");
 
 
   const hasActiveFilters = !!filter.search || !!filter.state || !!filter.city || !!filter.technicianId;
@@ -87,38 +89,74 @@ const [cityOptions, setCityOptions] = useState(
     setActiveTab(record);
   }
 
-  const handleSearch = async (searchValue = filter.search) => {
-    const isApproved = activeTab === "approve";
-    const page = isApproved ? approvePage : unapprovePage;
-    const limit = filter.limit;
-    const payload = { search: searchValue, page, limit, isApproved , state: filter.state,
-    city: filter.city,
-    technicianId: filter.technicianId, };
-    await dispatch(getProducts(payload));
+
+const handleSearch = async (
+  searchValue = filter.search,
+  cityValue = filter.city,
+  stateValue = filter.state
+) => {
+  const isApproved = activeTab === "approve";
+  const page = isApproved ? approvePage : unapprovePage;
+  const limit = filter.limit;
+
+  // 🔥 city goes into search
+  const finalSearch = cityValue || searchValue;
+
+  const payload = {
+    search: finalSearch,
+    page,
+    limit,
+    isApproved,
+    state: stateValue,
+    technicianId: filter.technicianId,
+    // ❌ city removed
   };
+
+  await dispatch(getProducts(payload));
+};
+
 
   const fetchProduct = () => handleSearch(filter.search);
 
-useEffect(() => {
-  if (filter.state) {
+  useEffect(() => {
+
     dispatch(
-      getTechnicianDropdown({
-        state: filter.state,
-        city: filter.city,
-      })
+      getTechnicianDropdown()
     );
-  }
-}, [dispatch, filter.state, filter.city]);
+  }, [dispatch]);
+
 
   useEffect(() => {
     fetchProduct();
-  }, [activeTab, approvePage, unapprovePage, filter.limit]);
+  }, [activeTab, approvePage, unapprovePage, filter.limit, filter.city, filter.state, filter.technicianId]);
+
 
   useEffect(() => {
     const urlSearch = searchParams.get("search") || "";
     const urlLimit = parseInt(searchParams.get("limit")) || 10;
     const urlPage = parseInt(searchParams.get("page")) || 1;
-    setFilter((prev) => ({ ...prev, search: urlSearch, limit: urlLimit }));
+    const urlState = searchParams.get("state") || "";
+    const urlCity = searchParams.get("city") || "";
+    const urlTechnicianId = searchParams.get("technicianId") || "";
+const formattedCity = urlCity
+    ? urlCity.charAt(0).toUpperCase() + urlCity.slice(1)
+    : "";
+    setFilter((prev) => ({
+      ...prev,
+      search: urlSearch,
+      limit: urlLimit,
+      state: urlState,
+      city: urlCity,
+      technicianId: urlTechnicianId
+    }));
+
+    // Update city options when state changes from URL
+    if (urlState) {
+      setCityOptions(statesAndCities[urlState] || []);
+    } else {
+      setCityOptions([]);
+    }
+
     const isApprove = activeTab === "approve";
     if (isApprove) setApprovePage(urlPage);
     else setUnapprovePage(urlPage);
@@ -169,9 +207,12 @@ useEffect(() => {
     },
     {
       title: "Installation By",
-      dataIndex: "technicianId",
-      key: "technicianId",
-      render: (t) => (t ? t.name : "-"),
+      dataIndex: "installationBy",
+      key: "installationBy",
+      render: (t) =>
+        t
+          ? `${t.name} - ${t.companyName} (${t.type})`
+          : "-",
     },
     {
       title: "Action",
@@ -214,13 +255,40 @@ useEffect(() => {
       limit: pageSize,
     });
   };
-  const handleClearAll = () => {
-    setFilter({ search: "", state: "", city: "", technicianId: "", limit: 10 });
+  const handleClearAll = async () => {
+    const clearedFilter = {
+      search: "",
+      state: "",
+      city: "",
+      technicianId: "",
+      limit: 10,
+    };
+
+    setFilter(clearedFilter);
     setCityOptions([]);
     setApprovePage(1);
     setUnapprovePage(1);
-    updateUrlParams({ page: 1, limit: 10, search: "", state: "", city: "", technicianId: "" });
-    handleSearch("");
+
+    updateUrlParams({
+      page: 1,
+      limit: 10,
+      search: "",
+      state: "",
+      city: "",
+      technicianId: "",
+    });
+
+
+    const payload = {
+      search: "",
+      page: 1,
+      limit: 10,
+      isApproved: activeTab === "approve",
+      state: "",
+      technicianId: "",
+    };
+
+    await dispatch(getProducts(payload));
   };
 
   return (
@@ -250,6 +318,8 @@ useEffect(() => {
                 }
               }}
               onSearch={(v) => {
+                const newFilter = { ...filter, search: v };
+                setFilter(newFilter);
                 updateUrlParams({ page: 1, search: v });
                 handleSearch(v);
               }}
@@ -281,57 +351,77 @@ useEffect(() => {
             </Space>
           </Col>
         </Row>
-{visible && (
-  <Row className="mt-2 p-4 border-t border-gray-100" gutter={16}>
-    {/* State */}
-    <Col xs={24} sm={12} md={6}>
-      <CustomInput
-        type="select"
-        placeholder="Select State"
-        options={Object.keys(statesAndCities).map((s) => ({
-          label: s,
-          value: s,
-        }))}
-        value={filter.state || undefined}
-        onChange={(v) => {
-          setFilter({ ...filter, state: v, city: "", technicianId: "" });
-          setCityOptions(statesAndCities[v] || []);
-        }}
-        label=""
-      />
-    </Col>
+        {visible && (
+          <Row className="mt-2 p-4 border-t border-gray-100" gutter={16}>
+            {/* State */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                placeholder="Select State"
+                options={Object.keys(statesAndCities).map((s) => ({
+                  label: s,
+                  value: s,
+                }))}
+                value={filter.state || undefined}
+                onChange={(v) => {
+                  setFilter({ ...filter, state: v, city: "", technicianId: "" });
+                  setCityOptions(statesAndCities[v] || []);
+                }}
+                label="state"
+              />
+            </Col>
 
-    {/* City */}
-    <Col xs={24} sm={12} md={6}>
-      <CustomInput
-        type="select"
-        placeholder="Select City"
-        options={cityOptions.map((c) => ({ label: c, value: c }))}
-        value={filter.city || undefined}
-        onChange={(v) => setFilter({ ...filter, city: v, technicianId: "" })}
-        disabled={!filter.state}
-        label=""
-      />
-    </Col>
+            {/* City */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                placeholder="Select City"
+                options={cityOptions.map((c) => ({ label: c, value: c }))}
+                value={filter.city || undefined}
 
-    {/* Technician */}
-    <Col xs={24} sm={12} md={6}>
-      <CustomInput
-        type="select"
-        placeholder="Select Technician"
-        loading={dropdownLoading}
-        options={technicianDropdown.map((t) => ({
-          label: t.name,
-          value: t._id,
-        }))}
-        value={filter.technicianId || undefined}
-        onChange={(v) => setFilter({ ...filter, technicianId: v })}
-        // disabled removed so always selectable
-        label=""
-      />
-    </Col>
-  </Row>
-)}
+
+onChange={(v) => {
+  const newFilter = {
+    ...filter,
+    city: v,
+    search: v, // 🔥 city stored as search
+  };
+
+  setFilter(newFilter);
+
+  updateUrlParams({
+    page: 1,
+    search: v, // 🔥 only search in URL
+    state: filter.state,
+  });
+
+  handleSearch(v, v, filter.state);
+}}
+
+
+                disabled={!filter.state}
+                label="city"
+              />
+            </Col>
+
+            {/* Technician */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                placeholder="Select Technician"
+                loading={dropdownLoading}
+                options={technicianDropdown.map((t) => ({
+                  label: t.name,
+                  value: t._id,
+                }))}
+                value={filter.technicianId || undefined}
+                onChange={(v) => setFilter({ ...filter, technicianId: v })}
+                // disabled removed so always selectable
+                label="Technician"
+              />
+            </Col>
+          </Row>
+        )}
 
         {hasActiveFilters && (
           <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
@@ -369,7 +459,7 @@ useEffect(() => {
                     color="orange"
                     closable
                     onClose={() => {
-                      setFilter((prev) => ({ ...prev, city: "", technicianId: "" }));
+                      setFilter((prev) => ({ ...prev, city: "", search: "", technicianId: "" }));
                       updateUrlParams({ page: 1, city: "", technicianId: "" });
                       handleSearch();
                     }}

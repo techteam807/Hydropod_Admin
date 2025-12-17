@@ -1,10 +1,11 @@
 import api from "../../axiosconfig";
 
+
 const getProduct = async (payload) => {
-    const { search = "", limit = 10, page = 1, isApproved, state = "", city = "", technicianId = "" } = payload;
+    const { search = "", limit = 10, page = 1, isApproved, state = "",  technicianId = "" } = payload;
 
     const res = await api.get("/productInstallation/listProductInstallations", {
-        params: { search, limit, page, isApproved, state, city, technicianId },
+        params: { search, limit, page, isApproved, state, technicianId },
     });
     return res.data;
 };

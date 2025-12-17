@@ -57,11 +57,14 @@ const ViewDistributor = () => {
     const page = isActive ? activePage : inactivePage;
     const pageSize =
       parseInt(searchParams?.get("limit")) || pagination.limit || 10;
+       let searchValue = filter.search || "";
+      if (filter.city) {
+    searchValue = searchValue ? `${searchValue} ${filter.city}` : filter.city;
+  }
 
     const payload = {
-      search: filter.search || "",
+      search: searchValue,
       state: filter.state || "",
-      city: filter.city || "",
       limit: pageSize,
       page,
       isActive,
@@ -93,7 +96,9 @@ const ViewDistributor = () => {
   };
 
   const handleSearch = () => {
-    updateUrlParams({ page: 1, limit: 10, search: filter.search });
+    let searchValue = filter.search || "";
+  if (filter.city) searchValue = searchValue ? `${searchValue} ${filter.city}` : filter.city;
+    updateUrlParams({ page: 1, limit: 10, search: searchValue });
   };
 
   const handleVisible = () => {
@@ -101,12 +106,13 @@ const ViewDistributor = () => {
   };
 
   const handleFilter = () => {
+    let searchValue = filter.search || "";
+  if (filter.city) searchValue = searchValue ? `${searchValue} ${filter.city}` : filter.city;
     const params = {
       page: 1,
       limit: 10,
-      search: filter.search || "",
+      search: searchValue,
       state: filter.state || "",
-      city: filter.city || "",
       isActive: activeTab === "active",
     };
     updateUrlParams(params);
