@@ -50,6 +50,7 @@ function AddDealer() {
           state: dealerById?.dealer?.address?.state || "",
           pincode: dealerById?.dealer?.address?.pincode || "",
         },
+        msme_number: dealerById?.dealer?.msme_number,
         gst_number: dealerById?.dealer?.gst_number,
         additional_notes: dealerById?.dealer?.additional_notes,
         terms_conditions: dealerById?.dealer?.terms_conditions,
@@ -73,6 +74,7 @@ function AddDealer() {
       distributorId: values.distributorId,
       company_name: values.company_name,
       name: values.name,
+      msme_number: values?.msme_number,
       gst_number: values?.gst_number,
       email: values.email,
       mobile_number: values.mobile_number,
@@ -174,6 +176,12 @@ function AddDealer() {
                   label="GST Number"
                   placeholder="Enter GST Number"
                   rules={[{ required: true, message: "Please enter GST Number" }]}
+                />
+                <CustomInput
+                  type="text"
+                  name="msme_number"
+                  label="MSME Number"
+                  placeholder="Enter MSME Number"
                 />
               </div>
             </div>
