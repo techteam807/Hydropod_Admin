@@ -14,7 +14,7 @@ const getAllTechnician = async (payload) => {
     return res.data;
 };
 const getCount = async () => {
-    const res = await api.get("/user/userCount",);
+    const res = await api.get("/user/userCount");
     return res.data;
 }
 const updateTechnician = async (technicianId, data) => {

@@ -59,6 +59,12 @@ const AppSidebar = ({ collapsed, setCollapsed }) => {
       label: "Product Installation",
       path: "/product",
     },
+    {
+      key: "6",
+      icon: <Icons.FileAddOutlined />,
+      label: "Banners",
+      path: "/banner",
+    },
   ];
   
 
