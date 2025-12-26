@@ -97,10 +97,25 @@ export const deleteTechnician = createAsyncThunk(
   }
 );
 export const restoreTechnician = createAsyncThunk(
-  "Technician/restoreTechnician",
-  async (technicianId) => {
+  "technician/restoreTechnician", 
+   async (technicianId) => {
     try {
       const response = await technicianService.restoreTechnician(technicianId);
+      return response;
+    } catch (error) {
+      throw (
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong"
+      );
+    }
+  }
+);
+export const getTechnicianDropdown = createAsyncThunk(
+  "technician/getTechnicianDropdown",
+  async (params = {}) => {
+    try {
+      const response = await technicianService.getTechnicianDropdown(params);
       return response;
     } catch (error) {
       throw (
@@ -119,6 +134,8 @@ const technicianSlice = createSlice({
     activeTechnician: [],
     inactiveTechnician: [],
     singleTechnician: null,
+    technicianDropdown: [],   
+  dropdownLoading: false,  
     count: [],
     pagination: {
       page: 1,
@@ -236,7 +253,19 @@ const technicianSlice = createSlice({
               state.restoreLoading = false;
               state.error = action.error.message;
               toast.error(state.error);
-            });
+            })
+            .addCase(getTechnicianDropdown.pending, (state) => {
+  state.dropdownLoading = true;
+})
+.addCase(getTechnicianDropdown.fulfilled, (state, action) => {
+  state.dropdownLoading = false;
+  state.technicianDropdown = action.payload.data;
+})
+.addCase(getTechnicianDropdown.rejected, (state, action) => {
+  state.dropdownLoading = false;
+  state.error = action.error.message;
+});
+
   },
 });
 

@@ -16,12 +16,18 @@ import {
 } from "antd";
 import Icons from "../../assets/icon";
 import CustomTable from "../../component/commonComponent/CustomTable";
+import CustomInput from "../../component/commonComponent/CustomInput";
+import { statesAndCities } from "../../constants/cities";
+import { getTechnicianDropdown } from "../../redux/slice/technician/technicianSlice";
 import { useDispatch, useSelector } from "react-redux";
 import {
   approveProducts,
   getProducts,
 } from "../../redux/slice/product/productSlice";
-import { useSearchParams } from "react-router-dom";
+
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { FaClipboardCheck } from "react-icons/fa";
+import { LuPackage } from "react-icons/lu";
 
 const { Search } = Input;
 const { TabPane } = Tabs;
@@ -48,17 +54,27 @@ const ViewProductInstallation = () => {
 
   const [imagePreview, setImagePreview] = useState(null);
   const [approvalNotes, setApprovalNotes] = useState("");
+  const { technicianDropdown, dropdownLoading } = useSelector(
+    (state) => state.technician
+  );
 
   const [filter, setFilter] = useState({
     search: searchParams.get("search") || "",
+    state: searchParams.get("state") || "",
+    city: searchParams.get("city") || "",
+    technicianId: searchParams.get("technicianId") || "",
     limit: parseInt(searchParams.get("limit")) || 10,
   });
+  const [cityOptions, setCityOptions] = useState(
+    filter.state ? statesAndCities[filter.state] || [] : []
+  );
 
-  const hasActiveFilters = !!filter.search;
+  const hasActiveFilters =
+    !!filter.search || !!filter.state || !!filter.city || !!filter.technicianId;
 
-  const setUrl = (updates) => {
+  const updateUrlParams = (newParams) => {
     const params = new URLSearchParams(searchParams);
-    Object.entries(updates).forEach(([k, v]) => {
+    Object.entries(newParams).forEach(([k, v]) => {
       if (v) params.set(k, v);
       else params.delete(k);
     });
@@ -66,36 +82,37 @@ const ViewProductInstallation = () => {
   };
 
   const handleTabChange = (record) => {
-    setUrl({
+    updateUrlParams({
       page: 1,
       limit: 10,
     });
     setActiveTab(record);
-  }
+  };
 
-  const handleSearch = async (searchValue = filter.search) => {
+  const handleSearch = (currentFilter) => {
+    const f = currentFilter || filter;
     const isApproved = activeTab === "approve";
     const page = isApproved ? approvePage : unapprovePage;
-    const limit = filter.limit;
-    const payload = { search: searchValue, page, limit, isApproved };
-    await dispatch(getProducts(payload));
+
+    // Combine city into search text if it exists
+    let searchText = f.search || "";
+    if (f.city) {
+      searchText = searchText ? `${searchText} ${f.city}` : f.city; // append city to search
+    }
+
+    const payload = {
+      search: searchText,
+      state: f.state || "",
+      technicianId: f.technicianId || "",
+      page,
+      limit: f.limit,
+      isApproved,
+    };
+
+    dispatch(getProducts(payload));
   };
 
   const fetchProduct = () => handleSearch(filter.search);
-
-  useEffect(() => {
-    fetchProduct();
-  }, [activeTab, approvePage, unapprovePage, filter.limit]);
-
-  useEffect(() => {
-    const urlSearch = searchParams.get("search") || "";
-    const urlLimit = parseInt(searchParams.get("limit")) || 10;
-    const urlPage = parseInt(searchParams.get("page")) || 1;
-    setFilter((prev) => ({ ...prev, search: urlSearch, limit: urlLimit }));
-    const isApprove = activeTab === "approve";
-    if (isApprove) setApprovePage(urlPage);
-    else setUnapprovePage(urlPage);
-  }, [searchParams, activeTab]);
 
   const getImageUrl = (img) => {
     if (!img) return null;
@@ -131,6 +148,67 @@ const ViewProductInstallation = () => {
     });
   };
 
+  const handleTableChange = (page, pageSize) => {
+    updateUrlParams({
+      page: page,
+      limit: pageSize,
+    });
+  };
+
+  const handleClearAll = async () => {
+    const clearedFilter = {
+      search: "",
+      state: "",
+      city: "",
+      technicianId: "",
+      limit: 10,
+    };
+
+    setFilter(clearedFilter);
+    setCityOptions([]);
+    setApprovePage(1);
+    setUnapprovePage(1);
+
+    updateUrlParams({
+      page: 1,
+      limit: 10,
+      search: "",
+      state: "",
+      city: "",
+      technicianId: "",
+    });
+
+    const payload = {
+      search: "",
+      page: 1,
+      limit: 10,
+      isApproved: activeTab === "approve",
+      state: "",
+      technicianId: "",
+    };
+
+    await dispatch(getProducts(payload));
+  };
+
+  const handleClearFilter = (key) => {
+    setFilter((prev) => {
+      const updated = { ...prev, [key]: "" };
+
+      if (key === "state") {
+        // optionally clear technician when state changes
+        updated.technicianId = "";
+      }
+
+      handleSearch(updated); // fetch using updated filter
+      const paramsUpdate = { page: 1 };
+      if (key === "search") paramsUpdate.search = "";
+      if (key === "state") paramsUpdate.technicianId = "";
+      updateUrlParams(paramsUpdate);
+
+      return updated;
+    });
+  };
+
   const columns = [
     { title: "Product Code", dataIndex: "productCode", key: "productCode" },
     { title: "Customer Name", dataIndex: "name", key: "name" },
@@ -142,9 +220,9 @@ const ViewProductInstallation = () => {
     },
     {
       title: "Installation By",
-      dataIndex: "technicianId",
-      key: "technicianId",
-      render: (t) => (t ? t.name : "-"),
+      dataIndex: "installationBy",
+      key: "installationBy",
+      render: (t) => (t ? `${t.name} [${t.companyName}] (${t.type})` : "-"),
     },
     {
       title: "Action",
@@ -181,20 +259,44 @@ const ViewProductInstallation = () => {
     },
   ];
 
-  const handleTableChange = (page, pageSize) => {
-    setUrl({
-      page: page,
-      limit: pageSize,
-    });
-  };
+  useEffect(() => {
+    dispatch(getTechnicianDropdown());
+  }, [dispatch]);
 
-  const handleClearAll = () => {
-    setFilter({ search: "", limit: 10 });
-    setApprovePage(1);
-    setUnapprovePage(1);
-    setUrl({ page: 1, limit: 10, search: "" });
-    handleSearch("");
-  };
+  useEffect(() => {
+    fetchProduct();
+  }, [activeTab, approvePage, unapprovePage, filter.limit]);
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    const urlLimit = parseInt(searchParams.get("limit")) || 10;
+    const urlPage = parseInt(searchParams.get("page")) || 1;
+    const urlState = searchParams.get("state") || "";
+    const urlCity = searchParams.get("city") || "";
+    const urlTechnicianId = searchParams.get("technicianId") || "";
+    const formattedCity = urlCity
+      ? urlCity.charAt(0).toUpperCase() + urlCity.slice(1)
+      : "";
+    setFilter((prev) => ({
+      ...prev,
+      search: urlSearch,
+      limit: urlLimit,
+      state: urlState,
+      city: urlCity,
+      technicianId: urlTechnicianId,
+    }));
+
+    // Update city options when state changes from URL
+    if (urlState) {
+      setCityOptions(statesAndCities[urlState] || []);
+    } else {
+      setCityOptions([]);
+    }
+
+    const isApprove = activeTab === "approve";
+    if (isApprove) setApprovePage(urlPage);
+    else setUnapprovePage(urlPage);
+  }, [searchParams, activeTab]);
 
   return (
     <div className="m-4">
@@ -214,16 +316,19 @@ const ViewProductInstallation = () => {
             <Search
               placeholder="Search product installation..."
               value={filter.search}
-              onChange={(e) => {
-                const v = e.target.value;
-                setFilter((prev) => ({ ...prev, search: v }));
-                if (!v) {
-                  setUrl({ page: 1, search: "" });
-                  handleSearch("");
-                }
-              }}
+              // onChange={(e) => {
+              //   const v = e.target.value;
+              //   setFilter((prev) => ({ ...prev, search: v }));
+              //   if (!v) {
+              //     updateUrlParams({ page: 1, search: "" });
+              //     handleSearch("");
+              //   }
+              // }}
+              onChange={(e) => setFilter({ ...filter, search: e.target.value })}
               onSearch={(v) => {
-                setUrl({ page: 1, search: v });
+                const newFilter = { ...filter, search: v };
+                setFilter(newFilter);
+                updateUrlParams({ page: 1, search: v });
                 handleSearch(v);
               }}
               allowClear
@@ -238,10 +343,13 @@ const ViewProductInstallation = () => {
                 type="primary"
                 icon={<Icons.FilterOutlined />}
                 onClick={() => {
-                  setUrl({
+                  updateUrlParams({
                     page: 1,
                     limit: filter.limit,
                     search: filter.search,
+                    state: filter.state,
+                    city: filter.city,
+                    technicianId: filter.technicianId,
                   });
                   handleSearch();
                 }}
@@ -251,6 +359,56 @@ const ViewProductInstallation = () => {
             </Space>
           </Col>
         </Row>
+        {visible && (
+          <Row className="mt-2 p-4 border-t border-gray-100" gutter={16}>
+            {/* State */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                placeholder="Select State"
+                options={Object.keys(statesAndCities).map((s) => ({
+                  label: s,
+                  value: s,
+                }))}
+                value={filter.state || undefined}
+                onChange={(v) => {
+                  setFilter({ ...filter, state: v, city: "" });
+                  setCityOptions(statesAndCities[v] || []);
+                }}
+              />
+            </Col>
+
+            {/* City */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                placeholder="Select City"
+                options={cityOptions.map((c) => ({ label: c, value: c }))}
+                value={filter.city || undefined}
+                onChange={(v) => {
+                  const newFilter = { ...filter, city: v };
+                  setFilter(newFilter);
+                  // handleSearch(newFilter); // city included in search
+                }}
+                disabled={!filter.state}
+              />
+            </Col>
+
+            {/* Technician */}
+            <Col xs={24} sm={12} md={6}>
+              <CustomInput
+                type="select"
+                placeholder="Select Technician"
+                options={technicianDropdown.map((t) => ({
+                  label: t.name,
+                  value: t._id,
+                }))}
+                value={filter.technicianId || undefined}
+                onChange={(v) => setFilter({ ...filter, technicianId: v })}
+              />
+            </Col>
+          </Row>
+        )}
 
         {hasActiveFilters && (
           <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
@@ -260,13 +418,40 @@ const ViewProductInstallation = () => {
                   <Tag
                     color="blue"
                     closable
-                    onClose={() => {
-                      setFilter((prev) => ({ ...prev, search: "" }));
-                      setUrl({ page: 1, search: "" });
-                      handleSearch("");
-                    }}
+                    onClose={() => handleClearFilter("search")}
                   >
                     Search: {filter.search}
+                  </Tag>
+                )}
+                {filter.state && (
+                  <Tag
+                    color="green"
+                    closable
+                    onClose={() => handleClearFilter("state")}
+                  >
+                    State: {filter.state}
+                  </Tag>
+                )}
+                {filter.city && (
+                  <Tag
+                    color="orange"
+                    closable
+                    onClose={() => handleClearFilter("city")}
+                  >
+                    City: {filter.city}
+                  </Tag>
+                )}
+
+                {filter.technicianId && (
+                  <Tag
+                    color="purple"
+                    closable
+                    onClose={() => handleClearFilter("technicianId")}
+                  >
+                    Technician:{" "}
+                    {technicianDropdown.find(
+                      (t) => t._id === filter.technicianId
+                    )?.name || filter.technicianId}
                   </Tag>
                 )}
               </Space>
@@ -283,6 +468,7 @@ const ViewProductInstallation = () => {
       <Card>
         <Tabs activeKey={activeTab} onChange={handleTabChange}>
           <TabPane tab="Pending" key="unapprove">
+            <h1>Note : Installation By -Tech Name [companyName] (Parent Type)</h1>
             <Spin spinning={loading}>
               <CustomTable
                 tableId="pendingProductInstallation"
@@ -323,69 +509,283 @@ const ViewProductInstallation = () => {
         width={800}
       >
         {selectedItem && (
-          <>
-            <div className="mb-4">
-              <p className="font-semibold mb-2">Images:</p>
-              <div className="flex flex-wrap gap-3">
-                {renderImages(selectedItem.images)}
+          // <>
+          //   <div className="mb-4">
+          //     <p className="font-semibold mb-2">Images:</p>
+          //     <div className="flex flex-wrap gap-3">
+          //       {renderImages(selectedItem.images)}
+          //     </div>
+          //   </div>
+
+          //   <div>
+          //     <label className="font-semibold mb-1 block">Approval Notes</label>
+          //     <Input.TextArea
+          //       rows={4}
+          //       placeholder="Enter your approval notes..."
+          //       value={approvalNotes}
+          //       onChange={(e) => setApprovalNotes(e.target.value)}
+          //     />
+          //   </div>
+
+          //   <div className="mt-4">
+          //     <label className="font-semibold mb-2 block text-gray-700">
+          //       Product Details:
+          //     </label>
+
+          //     <div className="p-4 border rounded-lg bg-white shadow-sm space-y-2">
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Code:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productCode}
+          //         </span>
+          //       </div>
+
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Model:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productModel}
+          //         </span>
+          //       </div>
+
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Size:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productSize}
+          //         </span>
+          //       </div>
+
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Vessel Color:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productVesselColor}
+          //         </span>
+          //       </div>
+          //     </div>
+          //   </div>
+
+          //   <div className="text-right mt-4">
+          //     <Button
+          //       type="primary"
+          //       loading={approveLoading}
+          //       onClick={async () => {
+          //         if (!selectedItem?._id)
+          //           return message.error("Invalid record");
+
+          //         const payload = {
+          //           _id: selectedItem._id,
+          //           data: { approval_notes: approvalNotes },
+          //         };
+
+          //         try {
+          //           await dispatch(approveProducts(payload)).unwrap();
+          //           message.success("Approved!");
+          //           setApproveModal(false);
+          //           fetchProduct();
+          //         } catch (e) {
+          //           message.error(e?.message || "Failed");
+          //         }
+          //       }}
+          //     >
+          //       Submit Approval
+          //     </Button>
+          //   </div>
+          // </>
+          <div className="max-w-4xl mx-auto p-3 bg-background min-h-screen">
+            <div className="grid gap-10">
+              {/* Image Galleries Section */}
+              <section className="space-y-6">
+                {/* Checklist Images */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-xl font-medium ">
+                    <FaClipboardCheck className="h-4 w-4" />
+                    Installation Checklist Images
+                  </div>
+
+                  <Image.PreviewGroup>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {selectedItem?.installation_checkList_images?.map((i) => (
+                        <div
+                          key={i}
+                          className="aspect-video relative rounded-lg overflow-hidden bg-muted group"
+                        >
+                          <Image
+                            src={i}
+                            alt={i}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Image.PreviewGroup>
+                </div>
+
+                {/* Product Images */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-xl font-medium ">
+                    <LuPackage className="h-4 w-4" />
+                    Product Images
+                  </div>
+
+                  <Image.PreviewGroup>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {selectedItem?.product_images?.map((i) => (
+                        <div
+                          key={i}
+                          className="aspect-video relative rounded-lg overflow-hidden bg-muted group"
+                        >
+                          <Image
+                            src={i}
+                            alt={i}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Image.PreviewGroup>
+                </div>
+              </section>
+
+              {/* Details Grid */}
+              <div className="grid md:grid-cols-2 gap-10">
+                {/* Customer Details */}
+                <section className="space-y-4">
+                  <h2 className="text-xl border-b pb-2">Customer Details</h2>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Name :
+                      </p>
+                      <p className="font-medium">{selectedItem?.name}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Address :
+                      </p>
+                      <p className="font-medium leading-relaxed">
+                        {[
+                          selectedItem?.address?.line1,
+                          selectedItem?.address?.line2,
+                          selectedItem?.address?.city,
+                          selectedItem?.address?.state,
+                          selectedItem?.address?.pincode,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Email :
+                      </p>
+                      <p className="font-medium">{selectedItem?.email}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Phone :
+                      </p>
+                      <p className="font-medium">
+                        {selectedItem?.mobile_number}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Product Specs */}
+                <section className="space-y-4">
+                  <h2 className="text-xl border-b pb-2">Product Details</h2>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <p className="text-xs  text-muted-foreground tracking-wider mr-2">
+                        Product Code :
+                      </p>
+
+                      <p className="font-medium flex-1 text-right truncate">
+                        {selectedItem?.productCode}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Product Model :
+                      </p>
+                      <p className="font-medium leading-relaxed">
+                        {selectedItem?.productModel}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Product Size :
+                      </p>
+                      <p className="font-medium">{selectedItem?.productSize}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Product Vessel Color :
+                      </p>
+                      <p className="font-medium">
+                        {selectedItem?.productVesselColor}
+                      </p>
+                    </div>
+                  </div>
+                </section>
               </div>
+
+              {selectedItem.installation_notes && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <label
+                      htmlFor="approval-notes"
+                      className="text-sm font-medium"
+                    >
+                      Installation Notes :
+                    </label>
+                  </div>
+
+                  <input
+                    id="approval-notes"
+                    placeholder="Enter any relevant notes or feedback regarding the installation..."
+                    className="h-14 w-full px-3 border rounded bg-white"
+                    value={selectedItem?.installation_notes}
+                    disabled
+                  />
+                </section>
+              )}
+
+              <section className="space-y-4 pt-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <label
+                    htmlFor="approval-notes"
+                    className="text-sm font-medium"
+                  >
+                    Approval Notes :
+                  </label>
+                </div>
+
+                <input
+                  id="approval-notes"
+                  placeholder="Enter any relevant notes or feedback regarding the installation..."
+                  className="h-14 w-full px-3 border rounded bg-white"
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                />
+              </section>
             </div>
-
-            <div>
-              <label className="font-semibold mb-1 block">Approval Notes</label>
-              <Input.TextArea
-                rows={4}
-                placeholder="Enter your approval notes..."
-                value={approvalNotes}
-                onChange={(e) => setApprovalNotes(e.target.value)}
-              />
-            </div>
-
-            <div className="mt-4">
-              <label className="font-semibold mb-2 block text-gray-700">
-                Product Details:
-              </label>
-
-              <div className="p-4 border rounded-lg bg-white shadow-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Code:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productCode}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Model:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productModel}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Size:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productSize}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Vessel Color:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productVesselColor}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-right mt-4">
+            <div className="text-right pt-5">
               <Button
                 type="primary"
                 loading={approveLoading}
@@ -411,7 +811,7 @@ const ViewProductInstallation = () => {
                 Submit Approval
               </Button>
             </div>
-          </>
+          </div>
         )}
       </Modal>
 
@@ -423,60 +823,248 @@ const ViewProductInstallation = () => {
         width={800}
       >
         {selectedItem && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              {renderImages(selectedItem.images)}
-            </div>
-            <div>
-              <p className="font-semibold mb-1">Approval Notes:</p>
-              <div className="p-3 border rounded-md bg-gray-50">
-                {selectedItem.approval_notes || " "}
+          <div className="max-w-4xl mx-auto p-6 bg-background min-h-screen">
+            <div className="grid gap-10">
+              {/* Image Galleries Section */}
+              <section className="space-y-6">
+                {/* Checklist Images */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-xl font-medium ">
+                    <FaClipboardCheck className="h-4 w-4" />
+                    Installation Checklist Images
+                  </div>
+                  <Image.PreviewGroup>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {selectedItem?.installation_checkList_images?.map((i) => (
+                        <div
+                          key={i}
+                          className="aspect-video relative rounded-lg overflow-hidden bg-muted group"
+                        >
+                          <Image
+                            src={i}
+                            alt={i}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Image.PreviewGroup>
+                </div>
+
+                {/* Product Images */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-xl font-medium ">
+                    <LuPackage className="h-4 w-4" />
+                    Product Images
+                  </div>
+                  <Image.PreviewGroup>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {selectedItem?.product_images?.map((i) => (
+                        <div
+                          key={i}
+                          className="aspect-video relative rounded-lg overflow-hidden bg-muted group"
+                        >
+                          <Image
+                            src={i}
+                            alt={i}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Image.PreviewGroup>
+                </div>
+              </section>
+
+              {/* Details Grid */}
+              <div className="grid md:grid-cols-2 gap-10">
+                {/* Customer Details */}
+                <section className="space-y-4">
+                  <h2 className="text-xl border-b pb-2">Customer Details</h2>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Name :
+                      </p>
+                      <p className="font-medium">{selectedItem?.name}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Address :
+                      </p>
+                      <p className="font-medium leading-relaxed">
+                        {[
+                          selectedItem?.address?.line1,
+                          selectedItem?.address?.line2,
+                          selectedItem?.address?.city,
+                          selectedItem?.address?.state,
+                          selectedItem?.address?.pincode,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Email :
+                      </p>
+                      <p className="font-medium">{selectedItem?.email}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Phone :
+                      </p>
+                      <p className="font-medium">
+                        {selectedItem?.mobile_number}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Product Specs */}
+                <section className="space-y-4">
+                  <h2 className="text-xl border-b pb-2">Product Details</h2>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <p className="text-xs  text-muted-foreground tracking-wider mr-2">
+                        Product Code :
+                      </p>
+
+                      <p className="font-medium flex-1 text-right truncate">
+                        {selectedItem?.productCode}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Product Model :
+                      </p>
+                      <p className="font-medium leading-relaxed">
+                        {selectedItem?.productModel}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Product Size :
+                      </p>
+                      <p className="font-medium">{selectedItem?.productSize}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs  text-muted-foreground tracking-wider">
+                        Product Vessel Color :
+                      </p>
+                      <p className="font-medium">
+                        {selectedItem?.productVesselColor}
+                      </p>
+                    </div>
+                  </div>
+                </section>
               </div>
-            </div>
-            <div className="mt-4">
-              <label className="font-semibold mb-2 block text-gray-700">
-                Product Details:
-              </label>
 
-              <div className="p-4 border rounded-lg bg-white shadow-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Code:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productCode}
-                  </span>
-                </div>
+              {/* Notes */}
+              {selectedItem?.approval_notes && (
+                <section className="space-y-4 pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <label
+                      htmlFor="approval-notes"
+                      className="text-sm font-medium"
+                    >
+                      Approval Notes :
+                    </label>
+                  </div>
 
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Model:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productModel}
-                  </span>
-                </div>
+                  <input
+                    id="approval-notes"
+                    placeholder="Enter any relevant notes or feedback regarding the installation..."
+                    className="h-14 w-full px-3 border rounded bg-white"
+                    value={selectedItem?.approval_notes}
+                    disabled
+                  />
+                </section>
+              )}
+              {selectedItem.installation_notes && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <label
+                      htmlFor="approval-notes"
+                      className="text-sm font-medium"
+                    >
+                      Installation Notes :
+                    </label>
+                  </div>
 
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Size:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productSize}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">
-                    Product Vessel Color:
-                  </span>
-                  <span className="text-gray-900">
-                    {selectedItem.productVesselColor}
-                  </span>
-                </div>
-              </div>
+                  <input
+                    id="approval-notes"
+                    placeholder="Enter any relevant notes or feedback regarding the installation..."
+                    className="h-14 w-full px-3 border rounded bg-white"
+                    value={selectedItem?.installation_notes}
+                    disabled
+                  />
+                </section>
+              )}
             </div>
           </div>
+          // <div className="space-y-4">
+          //   <div className="flex flex-wrap gap-3">
+          //     {renderImages(selectedItem.images)}
+          //   </div>
+          //   <div>
+          //     <p className="font-semibold mb-1">Approval Notes:</p>
+          //     <div className="p-3 border rounded-md bg-gray-50">
+          //       {selectedItem.approval_notes || " "}
+          //     </div>
+          //   </div>
+          //   <div className="mt-4">
+          //     <label className="font-semibold mb-2 block text-gray-700">
+          //       Product Details:
+          //     </label>
+
+          //     <div className="p-4 border rounded-lg bg-white shadow-sm space-y-2">
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Code:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productCode}
+          //         </span>
+          //       </div>
+
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Model:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productModel}
+          //         </span>
+          //       </div>
+
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Size:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productSize}
+          //         </span>
+          //       </div>
+
+          //       <div className="flex justify-between">
+          //         <span className="font-medium text-gray-600">
+          //           Product Vessel Color:
+          //         </span>
+          //         <span className="text-gray-900">
+          //           {selectedItem.productVesselColor}
+          //         </span>
+          //       </div>
+          //     </div>
+          //   </div>
+          // </div>
         )}
       </Modal>
 

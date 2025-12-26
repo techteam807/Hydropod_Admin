@@ -6,10 +6,10 @@ const createDistributor = async (data) => {
 };
 
 const getAllDistributor = async (payload) => {
-    const { search = "", state = "", city = "", limit = 10, page = 1, isActive } = payload;
+    const { search = "", state = "", limit = 10, page = 1, isActive } = payload;
 
     const res = await api.get("/distributor/getDistributors", {
-        params: { search, state, city, limit, page, isActive },
+        params: { search, state, limit, page, isActive },
     });
     return res.data;
 };

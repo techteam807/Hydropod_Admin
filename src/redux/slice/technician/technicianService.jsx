@@ -31,6 +31,12 @@ const restoreTechnician = async (technicianId) => {
     const res = await api.put(`/user/restoreTechnician/${technicianId}`);
     return res.data;
 };
+const getTechnicianDropdown = async (params = {}) => {
+  const res = await api.get("/user/getTechnicianDropDown", {
+    params,
+  });
+  return res.data;
+};
 
 const technicianService = {
     createTechnician,
@@ -38,7 +44,8 @@ const technicianService = {
     getCount,
     deleteTechnician,
     updateTechnician,
-    restoreTechnician
+    restoreTechnician,
+    getTechnicianDropdown
 };
 
 export default technicianService;

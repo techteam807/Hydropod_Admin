@@ -192,8 +192,8 @@ const ViewDealer = () => {
     },
   ];
 
-  const hasActiveFilters =
-    filter.search || filter.state || filter.city || filter.distributorId;
+const hasActiveFilters = !!(filter.search || filter.state || filter.city || filter.distributorId);
+
 
   return (
     <div className="m-4">
@@ -291,18 +291,106 @@ const ViewDealer = () => {
         )}
 
         {hasActiveFilters && (
-          <Row className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+          <Row className="mt-3 p-3 bg-gray-50 border rounded-md" gutter={8}>
             <Col flex="auto">
               <Space wrap>
-                {filter.search && (
-                  <Tag color="blue" closable onClose={() => handleClear()}>
-                    Search: {filter.search}
-                  </Tag>
-                )}
+                 {filter.search && (
+  <Tag
+    color="blue"
+    closable
+    onClose={() => {
+      const newFilter = { ...filter, search: "" };
+      setFilter(newFilter);
+      updateUrlParams({
+        search: "",
+        state: newFilter.state || "",
+        city: newFilter.city || "",
+        distributorId: newFilter.distributorId || "",
+        page: 1,
+        limit: 10,
+        isActive: activeTab === "active",
+      });
+      fetchDealer();
+    }}
+  >
+    Search: {filter.search}
+  </Tag>
+)}
+
+{filter.state && (
+  <Tag
+    color="green"
+    closable
+    onClose={() => {
+      const newFilter = { ...filter, state: "", city: "" };
+      setFilter(newFilter);
+      setCityOptions([]);
+      updateUrlParams({
+        search: newFilter.search || "",
+        state: "",
+        city: "",
+        distributorId: newFilter.distributorId || "",
+        page: 1,
+        limit: 10,
+        isActive: activeTab === "active",
+      });
+      fetchDealer();
+    }}
+  >
+    State: {filter.state}
+  </Tag>
+)}
+
+{filter.city && (
+  <Tag
+    color="purple"
+    closable
+    onClose={() => {
+      const newFilter = { ...filter, city: "" };
+      setFilter(newFilter);
+      updateUrlParams({
+        search: newFilter.search || "",
+        state: newFilter.state || "",
+        city: "",
+        distributorId: newFilter.distributorId || "",
+        page: 1,
+        limit: 10,
+        isActive: activeTab === "active",
+      });
+      fetchDealer();
+    }}
+  >
+    City: {filter.city}
+  </Tag>
+)}
+
+{filter.distributorId && (
+  <Tag
+    color="orange"
+    closable
+    onClose={() => {
+      const newFilter = { ...filter, distributorId: "" };
+      setFilter(newFilter);
+      updateUrlParams({
+        search: newFilter.search || "",
+        state: newFilter.state || "",
+        city: newFilter.city || "",
+        distributorId: "",
+        page: 1,
+        limit: 10,
+        isActive: activeTab === "active",
+      });
+      fetchDealer();
+    }}
+  >
+    Distributor: {distributorDrop.find(d => d._id === filter.distributorId)?.name || "-"}
+  </Tag>
+)}
+
               </Space>
             </Col>
             <Col>
-              <Button onClick={handleClear}>Clear All</Button>
+              <Button size="small" onClick={handleClear}>Clear All</Button>
             </Col>
           </Row>
         )}

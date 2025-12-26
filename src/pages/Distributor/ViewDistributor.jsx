@@ -57,11 +57,14 @@ const ViewDistributor = () => {
     const page = isActive ? activePage : inactivePage;
     const pageSize =
       parseInt(searchParams?.get("limit")) || pagination.limit || 10;
+    let searchValue = filter.search || "";
+    if (filter.city) {
+      searchValue = searchValue ? `${searchValue} ${filter.city}` : filter.city;
+    }
 
     const payload = {
-      search: filter.search || "",
+      search: searchValue,
       state: filter.state || "",
-      city: filter.city || "",
       limit: pageSize,
       page,
       isActive,
@@ -93,7 +96,10 @@ const ViewDistributor = () => {
   };
 
   const handleSearch = () => {
-    updateUrlParams({ page: 1, limit: 10, search: filter.search });
+    let searchValue = filter.search || "";
+    if (filter.city)
+      searchValue = searchValue ? `${searchValue} ${filter.city}` : filter.city;
+    updateUrlParams({ page: 1, limit: 10, search: searchValue });
   };
 
   const handleVisible = () => {
@@ -101,12 +107,14 @@ const ViewDistributor = () => {
   };
 
   const handleFilter = () => {
+    let searchValue = filter.search || "";
+    if (filter.city)
+      searchValue = searchValue ? `${searchValue} ${filter.city}` : filter.city;
     const params = {
       page: 1,
       limit: 10,
-      search: filter.search || "",
+      search: searchValue,
       state: filter.state || "",
-      city: filter.city || "",
       isActive: activeTab === "active",
     };
     updateUrlParams(params);
@@ -160,10 +168,10 @@ const ViewDistributor = () => {
       render: (_, record) => (
         <Space>
           <Button
-        type="default"
-        icon={<Icons.EyeOutlined />}
-        onClick={() => navigate(`/distributor/view/${record._id}`)}
-      />
+            type="default"
+            icon={<Icons.EyeOutlined />}
+            onClick={() => navigate(`/distributor/view/${record._id}`)}
+          />
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
@@ -230,25 +238,23 @@ const ViewDistributor = () => {
             <Search
               placeholder="Search distributor..."
               value={filter.search}
-              onChange={(e) =>
-                setFilter({ ...filter, search: e.target.value })
-              }
+              onChange={(e) => setFilter({ ...filter, search: e.target.value })}
               onSearch={handleSearch}
               allowClear
             />
           </Col>
           <Col xs={24} sm={12} md={14} style={{ textAlign: "right" }}>
             <Space>
-            <Button type="default" onClick={handleVisible}>
-              {visiable ? "Hide Filters" : "View Filters"}
-            </Button>
-            <Button
-              type="primary"
-              icon={<Icons.FilterOutlined />}
-              onClick={handleFilter}
-            >
-              Apply Filter
-            </Button>
+              <Button type="default" onClick={handleVisible}>
+                {visiable ? "Hide Filters" : "View Filters"}
+              </Button>
+              <Button
+                type="primary"
+                icon={<Icons.FilterOutlined />}
+                onClick={handleFilter}
+              >
+                Apply Filter
+              </Button>
             </Space>
           </Col>
         </Row>
@@ -302,32 +308,58 @@ const ViewDistributor = () => {
                     color="blue"
                     closable
                     onClose={() => {
-                      setFilter({ ...filter, search: "" });
-                      updateUrlParams({ search: "" });
+                      const newFilter = { ...filter, search: "" };
+                      setFilter(newFilter);
+                      updateUrlParams({
+                        ...Object.fromEntries(searchParams.entries()),
+                        search: "",
+                      });
+                      fetchDistributor(); // refresh table immediately
                     }}
                   >
                     Search: {filter.search}
                   </Tag>
                 )}
+
                 {filter.state && (
                   <Tag
                     color="green"
                     closable
                     onClose={() => {
-                      setFilter({ ...filter, state: "", city: "" });
-                      updateUrlParams({ state: "", city: "" });
+                      const newFilter = { ...filter, state: "", city: "" };
+                      setFilter(newFilter);
+                      updateUrlParams({
+                        ...Object.fromEntries(searchParams.entries()),
+                        state: "",
+                        city: "",
+                      });
+                      fetchDistributor();
                     }}
                   >
                     State: {filter.state}
                   </Tag>
                 )}
+
                 {filter.city && (
                   <Tag
                     color="orange"
                     closable
                     onClose={() => {
-                      setFilter({ ...filter, city: "" });
-                      updateUrlParams({ city: "" });
+                      const newFilter = { ...filter, city: "" }; // remove city
+                      setFilter(newFilter);
+
+                      // Update URL params including the remaining filters (state + search)
+                      updateUrlParams({
+                        search: newFilter.search || "",
+                        state: newFilter.state || "",
+                        city: "",
+                        page: 1,
+                        limit: 10,
+                        isActive: activeTab === "active",
+                      });
+
+                      // Fetch with the updated filter
+                      fetchDistributor();
                     }}
                   >
                     City: {filter.city}

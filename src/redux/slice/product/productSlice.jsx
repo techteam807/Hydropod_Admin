@@ -5,6 +5,8 @@ import productService from "./productService";
 export const getProducts = createAsyncThunk(
     "product/getProducts",
     async (payload) => {
+        console.log("pay:",payload);
+        
         try {
             const response = await productService.getProduct(payload);
             return response;
