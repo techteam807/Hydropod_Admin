@@ -154,7 +154,11 @@ const ViewTechnician = () => {
           <Button
             type="primary"
             icon={<Icons.EditOutlined />}
-            onClick={() => navigate(`/technician/edit/${record._id}`)}
+            onClick={() =>
+              navigate(`/technician/edit/${record._id}`, {
+                state: { technician: record },
+              })
+            }
           />
           {activeTab === "active" ? (
             <Popconfirm
@@ -293,84 +297,84 @@ const ViewTechnician = () => {
           </Row>
         )}
 
-{hasActiveFilters && (
-  <Row className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
-    <Col flex="auto">
-      <Space wrap>
-        {/* Search Tag */}
-        {filter.search && (
-          <Tag
-            color="blue"
-            closable
-            onClose={() => {
-              const newFilter = { ...filter, search: "" };
-              setFilter(newFilter);
-              updateUrlParams({
-                ...newFilter,
-                page: 1,
-                limit: 10,
-                isActive: activeTab === "active",
-              });
-              fetchTechnician();
-            }}
-          >
-            Search: {filter.search}
-          </Tag>
-        )}
+        {hasActiveFilters && (
+          <Row className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+            <Col flex="auto">
+              <Space wrap>
+                {/* Search Tag */}
+                {filter.search && (
+                  <Tag
+                    color="blue"
+                    closable
+                    onClose={() => {
+                      const newFilter = { ...filter, search: "" };
+                      setFilter(newFilter);
+                      updateUrlParams({
+                        ...newFilter,
+                        page: 1,
+                        limit: 10,
+                        isActive: activeTab === "active",
+                      });
+                      fetchTechnician();
+                    }}
+                  >
+                    Search: {filter.search}
+                  </Tag>
+                )}
 
-        {/* Parent Role Tag */}
-        {filter.userParentType && (
-          <Tag
-            color="green"
-            closable
-            onClose={() => {
-              const newFilter = { ...filter, userParentType: "", userParentId: "" };
-              setFilter(newFilter);
-              updateUrlParams({
-                ...newFilter,
-                page: 1,
-                limit: 10,
-                isActive: activeTab === "active",
-              });
-              fetchTechnician();
-            }}
-          >
-            Parent Role: {filter.userParentType.toUpperCase()}
-          </Tag>
-        )}
+                {/* Parent Role Tag */}
+                {filter.userParentType && (
+                  <Tag
+                    color="green"
+                    closable
+                    onClose={() => {
+                      const newFilter = { ...filter, userParentType: "", userParentId: "" };
+                      setFilter(newFilter);
+                      updateUrlParams({
+                        ...newFilter,
+                        page: 1,
+                        limit: 10,
+                        isActive: activeTab === "active",
+                      });
+                      fetchTechnician();
+                    }}
+                  >
+                    Parent Role: {filter.userParentType.toUpperCase()}
+                  </Tag>
+                )}
 
-        {/* Distributor/Dealer Tag */}
-        {filter.userParentId && (
-          <Tag
-            color="orange"
-            closable
-            onClose={() => {
-              const newFilter = { ...filter, userParentId: "" };
-              setFilter(newFilter);
-              updateUrlParams({
-                ...newFilter,
-                page: 1,
-                limit: 10,
-                isActive: activeTab === "active",
-              });
-              fetchTechnician();
-            }}
-          >
-            {filter.userParentType === "distributor"
-              ? `Distributor: ${distributorDrop.find(d => d._id === filter.userParentId)?.name || "-"}`
-              : filter.userParentType === "dealer"
-              ? `Dealer: ${dealerDrop.find(d => d._id === filter.userParentId)?.name || "-"}`
-              : ""}
-          </Tag>
-        )}
-      </Space>
-    </Col>
+                {/* Distributor/Dealer Tag */}
+                {filter.userParentId && (
+                  <Tag
+                    color="orange"
+                    closable
+                    onClose={() => {
+                      const newFilter = { ...filter, userParentId: "" };
+                      setFilter(newFilter);
+                      updateUrlParams({
+                        ...newFilter,
+                        page: 1,
+                        limit: 10,
+                        isActive: activeTab === "active",
+                      });
+                      fetchTechnician();
+                    }}
+                  >
+                    {filter.userParentType === "distributor"
+                      ? `Distributor: ${distributorDrop.find(d => d._id === filter.userParentId)?.name || "-"}`
+                      : filter.userParentType === "dealer"
+                        ? `Dealer: ${dealerDrop.find(d => d._id === filter.userParentId)?.name || "-"}`
+                        : ""}
+                  </Tag>
+                )}
+              </Space>
+            </Col>
 
-    <Col>
-      <Button size="small" onClick={handleClear}>Clear All</Button>
-    </Col>
-  </Row>
-)}
+            <Col>
+              <Button size="small" onClick={handleClear}>Clear All</Button>
+            </Col>
+          </Row>
+        )}
 
       </Card>
 
