@@ -2,7 +2,7 @@ import { Button, Card, Col, Form, Radio, Row, Select, Spin, Typography, message 
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import CustomInput from '../../component/commonComponent/CustomInput';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icons from '../../assets/icon';
 import { getDealerDropdown } from '../../redux/slice/dealer/dealerSlice';
 import { getDistributorDropdown } from '../../redux/slice/distributor/distributorSlice';
@@ -16,14 +16,35 @@ const AddTechnician = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
   const { technicianId } = useParams();
+
+  const technicianFromState = location.state?.technician;
+  const isEditing = !!technicianId;
   const { user } = useSelector((state) => state.auth);
   const [filteredDealers, setFilteredDealers] = useState([]);
   const { technician, loading, postLoading } = useSelector((state) => state.technician);
   const [userType, setUserType] = useState('Admin');
   const { distributorDrop } = useSelector((state) => state.distributor);
   const { dealerDrop } = useSelector((state) => state.dealer);
-  const isEditing = !!technicianId;
+  const technicianData =
+    technicianFromState ||
+    (Array.isArray(technician) && technician.length > 0
+      ? technician[0]
+      : null);
+
+  useEffect(() => {
+    if (isEditing && !technicianFromState) {
+      dispatch(
+        getTechnician({
+          search: technicianId,   // 👈 KEY POINT
+          limit: 1,
+          page: 1,
+          isActive: true,
+        })
+      );
+    }
+  }, [technicianId]);
   const [tempPreview, setTempPreview] = useState(null);   // modal preview
   const [imagePreview, setImagePreview] = useState(null); // final avatar
   const [imageFile, setImageFile] = useState(null);
@@ -114,6 +135,34 @@ const AddTechnician = () => {
   }, [technicianId, technician, form, dealerDrop, distributorDrop, user]);
 
   useEffect(() => {
+    if (!technicianData) return;
+
+    const mappedUserType =
+      technicianData.userParentType === "admin"
+        ? "Admin"
+        : technicianData.userParentType === "distributor"
+          ? "Distributor"
+          : "Dealer";
+
+    setUserType(mappedUserType);
+
+    form.setFieldsValue({
+      userType: mappedUserType,
+      name: technicianData.name,
+      mobile_number: technicianData.mobile_number,
+      distributorId:
+        technicianData.userParentType === "distributor"
+          ? technicianData.userParentId
+          : null,
+      dealerId:
+        technicianData.userParentType === "dealer"
+          ? technicianData.userParentId
+          : null,
+    });
+  }, [technicianData]);
+
+
+  useEffect(() => {
     if (
       !isEditing &&
       (userType === "Distributor" || userType === "Dealer") &&
@@ -168,6 +217,7 @@ const AddTechnician = () => {
     const basePayload = {
       name: values.name || '',
       mobile_number: values.mobile_number || '',
+      profile_picture: imageUrl || '',
     };
 
     try {

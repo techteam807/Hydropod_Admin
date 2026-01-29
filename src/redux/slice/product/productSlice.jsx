@@ -4,14 +4,12 @@ import productService from "./productService";
 
 export const getProducts = createAsyncThunk(
     "product/getProducts",
-    async (payload) => {
-        console.log("pay:",payload);
-        
+    async (payload, { rejectWithValue }) => {
         try {
             const response = await productService.getProduct(payload);
             return response;
         } catch (error) {
-            throw (
+            return rejectWithValue(
                 error?.response?.data?.message ||
                 error.message ||
                 "Something went wrong"
@@ -19,6 +17,7 @@ export const getProducts = createAsyncThunk(
         }
     }
 );
+
 
 export const approveProducts = createAsyncThunk(
     "product/approveProduct",
@@ -71,23 +70,25 @@ const productSlice = createSlice({
                     totalPages: action.payload.extras?.totalPages,
                 };
             })
-            .addCase(getProducts.rejected, (state) => {
+            .addCase(getProducts.rejected, (state, action) => {
                 state.loading = false;
+                state.error = action.payload;
+                toast.error(action.payload);
             })
             .addCase(approveProducts.pending, (state) => {
                 state.approveLoading = true;
             })
-            .addCase(approveProducts.fulfilled, (state, action) => {
-                state.approveLoading = false;
-                state.message = action.payload.message;
-                toast.success(state.message);
-            })
-            .addCase(approveProducts.rejected, (state, action) => {
-                state.approveLoading = false;
-                state.error = action.error.message;
-                toast.error(state.error);
-            })
-    },
+        .addCase(approveProducts.fulfilled, (state, action) => {
+            state.approveLoading = false;
+            state.message = action.payload.message;
+            toast.success(state.message);
+        })
+        .addCase(approveProducts.rejected, (state, action) => {
+            state.approveLoading = false;
+            state.error = action.error.message;
+            toast.error(state.error);
+        })
+},
 });
 
 export const { resetProduct } = productSlice.actions;
