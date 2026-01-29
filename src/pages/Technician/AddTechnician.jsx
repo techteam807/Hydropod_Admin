@@ -7,7 +7,9 @@ import Icons from '../../assets/icon';
 import { getDealerDropdown } from '../../redux/slice/dealer/dealerSlice';
 import { getDistributorDropdown } from '../../redux/slice/distributor/distributorSlice';
 import { addTechnician, getTechnician, updateTechnician } from '../../redux/slice/technician/technicianSlice';
-
+import { PlusOutlined, DeleteOutlined, UserOutlined } from "@ant-design/icons";
+import { Upload, Modal, Avatar, Slider } from "antd";
+import Cropper from "react-easy-crop";
 const { Title } = Typography;
 
 const AddTechnician = () => {
@@ -43,7 +45,46 @@ const AddTechnician = () => {
       );
     }
   }, [technicianId]);
+  const [tempPreview, setTempPreview] = useState(null);   // modal preview
+  const [imagePreview, setImagePreview] = useState(null); // final avatar
+  const [imageFile, setImageFile] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const CLOUD_NAME = import.meta.env.VITE_CLOUD_NAME;
+  const UPLOAD_PRESET = import.meta.env.VITE_UPLOAD_PROFILE_PRESET;
+  const getCroppedImg = (imageSrc, crop) => {
+    return new Promise((resolve) => {
+      const image = new Image();
+       image.crossOrigin = "anonymous";
+      image.src = imageSrc;
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = crop.width;
+        canvas.height = crop.height;
 
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(
+          image,
+          crop.x,
+          crop.y,
+          crop.width,
+          crop.height,
+          0,
+          0,
+          crop.width,
+          crop.height
+        );
+
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, "image/jpeg");
+      };
+    });
+  };
   useEffect(() => {
     if (technicianId) {
       dispatch(getTechnician({ limit: 100, page: 1 }));
@@ -159,7 +200,7 @@ const AddTechnician = () => {
   const onFinish = async (values) => {
     let userParentType = '';
     let userParentId = '';
-
+   
     if (!isEditing) {
       if (userType === 'Admin') {
         userParentType = 'admin';
@@ -172,10 +213,11 @@ const AddTechnician = () => {
         userParentId = values.dealerId;
       }
     }
-
+    
     const basePayload = {
       name: values.name || '',
       mobile_number: values.mobile_number || '',
+      profile_picture: imageUrl || '',
     };
 
     try {
@@ -187,6 +229,7 @@ const AddTechnician = () => {
           userRole: 'technician',
           userParentType,
           userParentId,
+          profile_picture: imageUrl || '',
         };
         await dispatch(addTechnician(fullPayload)).unwrap();
       }
@@ -195,7 +238,69 @@ const AddTechnician = () => {
       message.error(err || 'Failed to save technician');
     }
   };
+const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
 
+  const getBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const fileInputRef = React.useRef(null);
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input value IMMEDIATELY to allow re-uploading same file
+    e.target.value = '';
+
+    const base64 = await getBase64(file);
+    setTempPreview(base64);
+    setImagePreview(base64);
+    setImageFile(file);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setPreviewOpen(true);
+  };
+
+  const handleAvatarClick = () => {
+    if (imagePreview) {
+      setTempPreview(imagePreview);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setPreviewOpen(true);
+    }
+  };
+
+  const handleRemoveImage = (e) => {
+    e.stopPropagation();
+    setImagePreview(null);
+    setTempPreview(null);
+    setImageFile(null);
+    form.setFieldsValue({ profile_picture: null });
+  };
+
+const uploadImage = async (file) => {
+  setUploading(true);
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", UPLOAD_PRESET);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+    { method: "POST", body: form }
+  );
+
+  const data = await res.json();
+  return data.secure_url;
+};
   return (
     <div className="!relative bg-[#f8f8f8]">
       <div className="!p-3 !m-4 !pb-10">
@@ -325,6 +430,104 @@ const AddTechnician = () => {
                     { pattern: /^[0-9]{10}$/, message: 'Mobile number must be 10 digits' },
                   ]}
                 />
+                <div> 
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Profile Image
+                  </h3>
+                                <div className="flex items-center gap-6">
+                {/* Circle Preview */}
+                <div className="relative inline-block cursor-pointer" onClick={handleAvatarClick}>
+                  <Avatar
+                    size={120}
+                    src={imagePreview}
+                    icon={!imagePreview && <UserOutlined />}
+                    className="border border-gray-300 shadow-sm"
+                  />
+
+                  
+                  {imagePreview && (
+                    <div
+                      onClick={handleRemoveImage}
+                      className="
+        absolute -top-2 -right-2
+        bg-red-500 text-white
+        rounded-full p-1
+        cursor-pointer
+        shadow-md
+        hover:bg-red-600
+      "
+                    >
+                      <DeleteOutlined style={{ fontSize: 14 }} />
+                    </div>
+                  )}
+                </div>
+
+
+                
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+                <Button icon={<PlusOutlined />} onClick={handleUploadClick}>
+                  Upload Profile Image
+                </Button>
+               
+              </div>
+                            <Modal
+                open={previewOpen}
+                title="Set Profile Image"
+                onCancel={() => setPreviewOpen(false)}
+              onOk={async () => {
+  if (!croppedAreaPixels) return;
+
+  const croppedBlob = await getCroppedImg(tempPreview, croppedAreaPixels);
+  const croppedFile = new File([croppedBlob], "profile.jpg", {
+    type: "image/jpeg",
+  });
+
+  const url = await uploadImage(croppedFile);
+
+  if (url) {
+    setImageFile(croppedFile);
+    setImagePreview(url);
+    setImageUrl(url);
+    setUploading(false);
+    setPreviewOpen(false);
+  }
+}}
+
+                okText={`${uploading ? 'Uploading...' : 'Set Profile Image'}`}
+                width={420}
+              >
+                <div className="relative w-full h-[320px] bg-black rounded-lg overflow-hidden">
+                  {tempPreview && (
+                    <Cropper
+                      image={tempPreview}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      cropShape="round"
+                      showGrid={false}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={onCropComplete}
+                    />
+                  )}
+                </div>
+                <div className="mt-4 px-2">
+                  <Slider
+                    min={1}
+                    max={3}
+                    step={0.01}
+                    value={zoom}
+                    onChange={setZoom}
+                  />
+                </div>
+              </Modal>
+                </div>
               </div>
             </div>
           </Form>
